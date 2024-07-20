@@ -1,2 +1,2 @@
-# dow_utils
-Collections of my Dawn of War-related scripts and tools
+# DoW utils
+Collection of my Dawn of War-related scripts and tools
