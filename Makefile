@@ -17,4 +17,4 @@ screen_editor:
 	rm -rf dist/screen_editor/dow_utils dist/screen_editor/pyinstaller_script.py; \
 	cp -r screen_editor/templates screen_editor/static LICENSE dist/screen_editor; \
 	cd dist; \
-	zip -r screen_editor .;
+	zip -r screen_editor/ .;
