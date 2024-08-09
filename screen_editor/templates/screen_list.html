@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Select file{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  <form action="open">
+    <fieldset>
+        <label for="filepath">Select a file</label>
+        <select name="filepath" id="filepath">
+            {% for path in files %}
+            <option value="{{ path }}"> {{ path }} </option>
+            {% endfor %}
+          </select>
+          <input type="submit" value="Open">
+    </fieldset>
+  </form>
+{% endblock %}

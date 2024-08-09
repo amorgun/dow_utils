@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %} {{filepath.name}} {% endblock %}</h1>
+{% endblock %}
+
+{% block head %}
+  <style>
+    {% for name, font in config['fonts'].items() %}
+    @font-face {
+        font-family: {{ name }};
+        src: url('{{ url_for('app_file', filepath=font['path']) }}') format('truetype');
+    }
+    {% endfor %}
+
+    {% for name, style in config['text_styles'].items() %}
+    .textstyle_{{ name.replace(' ', '_') }} {
+        font-family: '{{ style['name'] }}';
+        font-size: {{ style['sizeDefault'] }}px;
+        {% if 'bold' in name %}
+        font-weight: bold;
+        {% endif %}
+    }
+    {% endfor %}
+
+    h3 {
+      margin: 5px;
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    #content, #columns {
+      width: 100%;
+      height: 100%;
+    }
+
+    #content {
+      display: flex;
+      flex-flow: column;
+    }
+
+    #columns {
+      display: flex;
+      flex: 0 1 auto;
+    }
+
+    #preview {
+      /* background: pink; */
+      flex: 4 800px;
+      position: relative;
+    }
+
+    #attributes {
+      background: lime;
+      flex: 1 200px;
+    }
+
+    .screen_block {
+      position: absolute;
+      /* border: 3px dotted red; */
+      box-sizing: border-box;
+    }
+
+    .screen_block_hidden {
+      display: none;
+    }
+
+    .screen_repr {
+      position: absolute;
+      visibility: hidden;
+    }
+
+    .screen_repr_state_normal {
+      visibility: visible;
+    }
+
+    .screen_button:hover .screen_repr_state_normal {
+      visibility: hidden;
+    }
+
+    .screen_button:hover .screen_repr_state_hover {
+      visibility: visible;
+    }
+
+    .screen_button:active .screen_repr_state_active {
+      visibility: visible;
+    }
+
+    .screen_repr_text {
+      margin: 0px;
+      display: flex;
+      align-items: center;
+    }
+
+    .screen_repr_text span {
+      color: transparent;
+      background-clip: text;
+    }
+  
+    .screen_swf {
+      background: lightgray;
+      opacity: 0.5;
+      text-wrap: wrap;
+      text-align: center;
+    }
+
+    .text_align_centre {
+      text-align: center;
+      justify-content: center;
+    }
+
+    .text_align_right {
+      text-align: right;
+      justify-content: right;
+    }
+
+    .text_multiline {
+      text-wrap: wrap;
+    }
+
+    .text_dropshadow {
+      filter: drop-shadow(1px 1px black)
+    }
+
+    .flip_horizontal {
+      transform: scaleX(-1);
+    }
+
+    .flip_vertical {
+      transform: scaleY(-1);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <h3>{{filepath.name}}</h3>
+  <section id="columns">
+    <div id="preview" class="column">
+      {{preview_html|safe}}
+    </div>
+    <!-- <div id="attributes" class="column">
+
+    </div> -->
+  </section>
+{% endblock %}

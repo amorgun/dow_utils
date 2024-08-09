@@ -2,7 +2,7 @@ import argparse
 import json
 import pathlib
 
-from ..lib.rsh import load_rsh
+from ..lib.formats.rsh import load_rsh
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
