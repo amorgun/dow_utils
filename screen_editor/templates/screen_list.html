@@ -9,8 +9,8 @@
     <fieldset>
         <label for="filepath">Select a file</label>
         <select name="filepath" id="filepath">
-            {% for path in files %}
-            <option value="{{ path }}"> {{ path }} </option>
+            {% for file in files %}
+            <option value="{{ file['name'] }}" {% if file['selected'] %}selected{% endif %}> {{ file['name'] }} </option>
             {% endfor %}
           </select>
           <input type="submit" value="Open">

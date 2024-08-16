@@ -271,7 +271,7 @@
 {% block content %}
   <div class="header">
     <h3>{{filepath.name}}</h3>
-    <a class="ui-button ui-corner-all ui-button-icon-only" title="Back to File Select" href="{{ url_for('app_list_screens') }}"><span class="ui-icon ui-icon-arrowreturnthick-1-n"></span></a>
+    <a class="ui-button ui-corner-all ui-button-icon-only" title="Back to File Select" href="{{ url_for('app_list_screens', selected=filepath) }}"><span class="ui-icon ui-icon-arrowreturnthick-1-n"></span></a>
     <button id="btn_show_in_files" class="ui-button ui-corner-all ui-button-icon-only" title="Open Containinf Folder" url="{{ url_for('app_show_file', filepath=filepath) }}"><span class="ui-icon ui-icon ui-icon-folder-open"></span></button>
   </div>
   <section id="columns">

@@ -50,8 +50,11 @@ def load_colours(paths: list[LayoutPath]) -> dict:
 
 @app.route('/')
 def app_list_screens():
+    selected_file = flask.request.args.get('selected', default=None, type=str)
     files = find_files(app.config['screen_dir'], '.screen')
-    return flask.render_template('screen_list.html', files=[f.relative_to(app.config['screen_dir']) for f in files])
+    return flask.render_template('screen_list.html', files=[
+        {'name': f.relative_to(app.config['screen_dir']), 'full_path': f, 'selected': selected_file is not None and f.samefile(selected_file)}
+    for f in files])
 
 
 @app.route('/open')
@@ -62,7 +65,7 @@ def app_open():
 
 @app.route('/screen/<path:filepath>')
 def app_screen(filepath):
-    test = flask.request.args.get('test', default = True, type = bool)
+    test = flask.request.args.get('test', default=True, type=bool)
     filepath = app.config['screen_dir'] / filepath
     layout: DowLayout = app.config['dow_layout']
 
