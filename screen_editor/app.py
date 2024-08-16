@@ -266,7 +266,7 @@ def app_sound(filepath):
     full_path = layout.find(f'sound/{filepath}.fda')
     if full_path is None or not full_path.is_file():
         flask.abort(404)
-    with tempfile.TemporaryDirectory(dir=str(app.root_path), prefix='sounds', ignore_cleanup_errors=True) as tmp_dir:
+    with tempfile.TemporaryDirectory(dir=str(app.root_path), prefix='sounds') as tmp_dir:
         tmp_dir = pathlib.Path(tmp_dir)
         src_path = tmp_dir / full_path.name
         src_path.write_bytes(full_path.read_bytes())
@@ -284,7 +284,8 @@ def app_sound(filepath):
                 capture_output=True,
             )
             return flask.send_file(
-                dst_path,
+                io.BytesIO(dst_path.read_bytes()),
+                download_name=dst_path.name,
             )
         flask.abort(500)
 
