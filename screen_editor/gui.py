@@ -30,10 +30,9 @@ def select_dir(var, entry):
 
 
 def start_window(files_root: pathlib.Path):
-    print(f'{files_root=}')
     multiprocessing.set_start_method('spawn')
     data_path = files_root / 'screen_editor_data.json'
-    root = tk.Tk()
+    root = tk.Tk(className='Screen Viewer')
     root.title('Dawn of War Screen Viewer')
     mainframe = ttk.Frame(root)
     mainframe.grid(column=0, row=0)
@@ -113,7 +112,7 @@ def start_window(files_root: pathlib.Path):
             dlg.grab_release()
             dlg.destroy()
 
-        dlg = tk.Toplevel(root)
+        dlg = tk.Toplevel(root, class_='Start Screen Viewer')
         text_label = ttk.Label(dlg, text='Starting a web server')
         text_label.grid(column=0, row=1, pady=(10, 0), padx=5)
 
@@ -141,7 +140,8 @@ def start_window(files_root: pathlib.Path):
                 link = ttk.Label(dlg, text=f'http://127.0.0.1:{app_port}', foreground='blue', cursor='hand2')
                 link.grid(column=0, row=2, padx=6)
                 link.bind("<ButtonRelease-1>", lambda e: webbrowser.open(f'http://127.0.0.1:{app_port}'))
-                ttk.Label(dlg, text='Close this window to stop the server').grid(column=0, row=3, padx=6)
+                ttk.Label(dlg, text='Refresh the page to display your changes.').grid(column=0, row=3, padx=6)
+                ttk.Label(dlg, text='Close this window to stop the server.').grid(column=0, row=4, padx=6)
                 stop_btn['text'] = 'Stop'
                 pbar.grid_forget()
                 return
@@ -150,7 +150,7 @@ def start_window(files_root: pathlib.Path):
             if not force_stop and steps_done < num_steps:
                 dlg.after(1000, ping_server, steps_done)
             else:
-                text_label['text'] = '    Cannot start the web server.\nCheck scrrent_editor.log for errors.'
+                text_label['text'] = '    Cannot start the web server.\nCheck screen_editor.log for errors.'
                 stop_btn['text'] = 'Close'
                 pbar.grid_forget()
 

@@ -12,4 +12,4 @@ if __name__ == '__main__':
     screen_dir = args.screen_dir
     if screen_dir is None:
         screen_dir = args.mod_dir / 'Data/art/ui/screens'
-    start_editor(args.mod_dir, screen_dir)
+    start_editor(args.mod_dir, screen_dir, files_root=pathlib.Path(__file__).parent)

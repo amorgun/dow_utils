@@ -6,23 +6,34 @@
 
 {% block head %}
   <style>
-    {% for name, font in config['fonts'].items() %}
+    {% for name, font in fonts.items() -%}
     @font-face {
         font-family: {{ name }};
         src: url('{{ url_for('app_file', filepath=font['path']) }}') format('truetype');
     }
     {% endfor %}
 
-    {% for name, style in config['text_styles'].items() %}
+    {% for name, style in text_styles.items() -%}
     .textstyle_{{ name.replace(' ', '_') }} {
         font-family: '{{ style['name'] }}';
-        font-size: {{ style['sizeDefault'] }}px;
-        {% if 'bold' in name %}
+        font-size: {{ style['sizeDefault'] | int }}px;
+        {% if 'bold' in name -%}
         font-weight: bold;
         {% endif %}
     }
-    {% endfor %}
+    {#
+        {% for k, v in style.items() -%}
+          {% if k is string and k.startswith('size') and not k.endswith('Default') %}
+    @media screen and (min-width: {{ k[4:] | int }}px) {
+      .textstyle_{{ name.replace(' ', '_') }} {
+        font-size: {{ v | int }}px;
+      }
+    }
+          {% endif %}
+        {% endfor %}
 
+    #}
+    {% endfor %}
     h3 {
       margin: 5px;
     }
@@ -40,6 +51,7 @@
     #content {
       display: flex;
       flex-flow: column;
+      overflow: hidden;
     }
 
     #columns {
@@ -58,6 +70,10 @@
       flex: 1 200px;
     }
 
+    .header h3 {
+      display: inline;
+    }
+
     .screen_block {
       position: absolute;
       /* border: 3px dotted red; */
@@ -68,24 +84,56 @@
       display: none;
     }
 
+    .screen_button, .screen_radiobutton, .screen_checkbutton {
+      z-index: 1;
+    }
+
     .screen_repr {
       position: absolute;
       visibility: hidden;
+      box-sizing: inherit;
     }
 
     .screen_repr_state_normal {
       visibility: visible;
     }
 
-    .screen_button:hover .screen_repr_state_normal {
+    .screen_block:hover > .screen_repr_state_normal {
       visibility: hidden;
     }
 
-    .screen_button:hover .screen_repr_state_hover {
+    .screen_block:hover > .screen_repr_state_hover,
+    .screen_block:active > .screen_repr_state_active {
       visibility: visible;
     }
 
-    .screen_button:active .screen_repr_state_active {
+    .screen_combobox_checked {
+      z-index: 2;
+    }
+
+    .screen_repr_checkable {
+      visibility: visible;
+      opacity: 0;
+      margin: 0;
+    }
+
+    .screen_repr_checkable:checked ~ .screen_repr_state_normal,
+    .screen_repr_checkable:checked ~ .screen_repr_state_hover,
+    .screen_repr_checkable:checked ~ .screen_repr_state_active {
+      visibility: hidden;
+    }
+
+    .screen_repr_checkable:checked ~ .screen_repr_state_checked,
+    .screen_combobox_checked .screen_repr_state_checked {
+      visibility: visible;
+    }
+
+    .screen_block:hover > .screen_repr_checkable:checked ~ .screen_repr_state_checked {
+      visibility: hidden;
+    }
+
+    .screen_block:hover > .screen_repr_checkable:checked ~ .screen_repr_state_checkedhover,
+    .screen_block:active > .screen_repr_checkable:checked ~ .screen_repr_state_checkedactive {
       visibility: visible;
     }
 
@@ -98,6 +146,12 @@
     .screen_repr_text span {
       color: transparent;
       background-clip: text;
+    }
+
+    .screen_repr_checkable {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
     }
   
     .screen_swf {
@@ -133,10 +187,93 @@
       transform: scaleY(-1);
     }
   </style>
+
+  <script>
+    $(function() {
+      var openedDrpdown = false;;
+      $( ".screen_combobox" ).each( function() {
+        const root = $( this );
+        root.data('opened', false);
+        $(this).find(".screen_role_label, .screen_role_arrowbutton").click( function(event) {
+          if (openedDrpdown) {
+            return;
+          }
+          root.addClass('screen_combobox_checked');
+          root.find(".screen_role_listbox").removeClass("screen_block_hidden");
+          openedDrpdown = true;
+          event.stopPropagation();
+        })
+      });
+
+      $( document ).click( function() {
+        $( ".screen_combobox .screen_role_listbox" ).addClass("screen_block_hidden");
+        $( ".screen_combobox" ).removeClass("screen_combobox_checked");
+        openedDrpdown = false;
+      });
+
+      $( ".screen_block[tooltip_text]" )
+      .filter("[tooltip_text!='']")
+      .hover(
+        function(event) {
+          $( ".screen_role_tooltip span" ).text($(this).attr("tooltip_text"))
+          event.stopPropagation();
+        },
+        function(event) {
+          $( ".screen_role_tooltip span" ).text("")
+          event.stopPropagation();
+        }
+      )
+
+      $( ".screen_block[sound_onhover]" )
+      .filter("[sound_onhover!='']")
+      .each(function(i) {
+        $("#" + $(this).attr("sound_onhover"))
+          .clone()
+          .attr("id", "onhover-" + i)
+          .appendTo($(this));
+        $(this).data("hover_sound", i);
+      })
+      .mouseenter(function() {
+        $("#onhover-" + $(this).data("hover_sound"))[0].play();
+      })
+
+      $( ".screen_block[sound_onclick]" )
+      .filter("[sound_onclick!='']")
+      .each(function(i) {
+        $("#" + $(this).attr("sound_onclick"))
+          .clone()
+          .attr("id", "onclick-" + i)
+          .appendTo($(this));
+        $(this).data("click_sound", i);
+      })
+      .click(function() {
+        $("#onclick-" + $(this).data("click_sound"))[0].play();
+      })
+
+      $( "audio[volume!='']" ).each(function() {
+        $(this).prop('volume', parseFloat($(this).attr("volume")))
+      });
+
+      $( "#btn_show_in_files" ).click(function() {
+        $.ajax({
+          url: $(this).attr("url")
+        })
+      });
+    });
+  </script>
+
+  {% for sound in sounds %}
+  <audio preload="auto" id="{{ sound['name'] }}" volume="{{ sound['volume'] }}"> <source src="{{ url_for('app_sound', filepath=sound['name']) }}"></source> </audio>
+  {% endfor %}
+
 {% endblock %}
 
 {% block content %}
-  <h3>{{filepath.name}}</h3>
+  <div class="header">
+    <h3>{{filepath.name}}</h3>
+    <a class="ui-button ui-corner-all ui-button-icon-only" title="Back to File Select" href="{{ url_for('app_list_screens') }}"><span class="ui-icon ui-icon-arrowreturnthick-1-n"></span></a>
+    <button id="btn_show_in_files" class="ui-button ui-corner-all ui-button-icon-only" title="Open Containinf Folder" url="{{ url_for('app_show_file', filepath=filepath) }}"><span class="ui-icon ui-icon ui-icon-folder-open"></span></button>
+  </div>
   <section id="columns">
     <div id="preview" class="column">
       {{preview_html|safe}}

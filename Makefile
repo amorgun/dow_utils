@@ -15,5 +15,5 @@ screen_editor:
 	DISPLAY=:0.0 WINEPREFIX="$(WINEPREFIX)" wine cmd /c screen_editor/install.bat; \
 	DISPLAY=:0.0 WINEPREFIX="$(WINEPREFIX)" wine cmd /c screen_editor/make_exe.bat; \
 	rm -rf dist/screen_editor/dow_utils dist/screen_editor/pyinstaller_script.py; \
-	cp -r screen_editor/templates screen_editor/static LICENSE dist/screen_editor; \
+	cp -r screen_editor/templates screen_editor/static LICENSE screen_editor/vgmstream-win64 dist/screen_editor; \
 	cd dist && zip -r screen_editor.zip screen_editor;
