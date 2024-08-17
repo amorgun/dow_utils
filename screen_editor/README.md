@@ -1,5 +1,6 @@
 # Dawn of War Screen Editor
-A tool for an interactive preview of `.screen` files.
+A tool for an interactive preview of `.screen` files.  
+It launches a local web server so you can view the files in your browser.
 
 # Download application
 See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/SE0.3).
