@@ -1,12 +1,20 @@
-# Installation
-1. ```bash
+# Dawn of War Screen Editor
+A tool for an interactive preview of `.screen` files.
+
+# Download application
+See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/SE0.3).
+Get `screen_editor.zip` from there.
+
+# Source code
+1. 
+```bash
 git clone git@github.com:amorgun/dow_utils.git
 pip install -r dow_utils/screen_editor/requirements.txt
 ```
-2. Get [vgmstream](https://github.com/vgmstream/vgmstream)
+2. Get [vgmstream-cli](https://github.com/vgmstream/vgmstream) and put it into `dow_utils/screen_editor` folder
 
 # Run
-You can get the `.exe` file from the [Releases page](https://github.com/amorgun/dow_utils/releases).
+You can run pre-build `.exe` or run it from the source code.
 
 ## GUI
 ```bash
