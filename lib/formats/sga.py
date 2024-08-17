@@ -311,13 +311,13 @@ class SgaArchive:
         return SgaPath(self, path)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(repr=False)
 class SgaPath:
     SENTINEL = object()
 
     sga: SgaArchive = dataclasses.field(repr=False)
     impl: pathlib.PurePath
-    _cached_item: IndexItem = dataclasses.field(default=SENTINEL, init=False, repr=False)
+    _cached_item: IndexItem = dataclasses.field(default=SENTINEL, init=False)
 
     def __post_init__(self):
         self.impl = pathlib.PurePath(self.impl)
@@ -364,7 +364,10 @@ class SgaPath:
 
     def __str__(self) -> str:
         return str(self.impl)
-    
+
+    def __repr__(self):
+        return f'''SgaPath("{self.impl}", "{self.sga.path}")'''
+
     def __hash__(self):
         return hash(self.impl)
     

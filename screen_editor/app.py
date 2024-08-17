@@ -8,14 +8,14 @@ import tempfile
 import flask
 from PIL import Image, ImageOps
 from ..lib.slpp import slpp as lua
-from ..lib.dow_layout import DowLayout, LayoutPath
+from ..lib.dow_layout import DowLayout, LayoutPath, DirectoryPath
 from ..lib.translation import Translator
 
 
 app = flask.Flask(__name__)
 
 
-def find_files(root: LayoutPath, extention: str) -> list[LayoutPath]:
+def find_files(root: LayoutPath | None, extention: str) -> list[LayoutPath]:
     if root is None:
         return []
 
@@ -48,6 +48,16 @@ def load_colours(paths: list[LayoutPath]) -> dict:
     return result
 
 
+def subprocess_run(*args, **kwargs):
+    default_args = {
+        'check': True,
+        'capture_output': True,
+    }
+    if platform.system() == 'Windows':
+        default_args['creationflags'] = 0x08000000  # CREATE_NO_WINDOW
+    return subprocess.run(*args, **{**default_args, **kwargs})
+
+
 @app.route('/')
 def app_list_screens():
     selected_file = flask.request.args.get('selected', default=None, type=str)
@@ -68,15 +78,14 @@ def app_screen(filepath):
     test = flask.request.args.get('test', default=True, type=bool)
     filepath = app.config['screen_dir'] / filepath
     layout: DowLayout = app.config['dow_layout']
-
     loaded_styles = {path.stem.lower(): load_styles(path) for group in [
-        find_files(layout.find('art/ui/styles'), '.styles'),
+        *(find_files(p, '.styles') for p in list(layout.iter_paths('art/ui/styles'))[::-1]),
         find_files(app.config['screen_dir'] / '../styles', '.styles'),
     ] for path in group}
     loaded_colours = load_colours(
         path
         for group in [
-            find_files(layout.find('art/ui/styles'), '.colours'),
+            *(find_files(p, '.colours') for p in list(layout.iter_paths('art/ui/styles'))[::-1]),
             find_files(app.config['screen_dir'] / '../styles', '.colours'),
         ]
         for path in group)
@@ -126,7 +135,7 @@ def app_screen(filepath):
         if role is not None:
             elem_class = f'{elem_class} screen_role_{role.lower()}'
         name = node.get('name')
-        if widget_info.get(name, {}).get('hidden', False):\
+        if widget_info.get(name, {}).get('hidden', False):
             elem_class = f'{elem_class} screen_block_hidden'
         tooltip_text = app.config['translator'][node.get('tooltip_text')]
         sound_attrs = []
@@ -160,14 +169,25 @@ def app_screen(filepath):
         yield '</div>'
 
     def iter_presentation(presentation: list[dict], text: str = None):
+        text_pox_x_start, text_pos_y_start, text_pox_x_end, text_pos_y_end = [None] * 4
+        for block in presentation:
+            if block.get('type') in ('Text', 'Line'):
+                continue
+            block_pox_x_start, block_pos_y_start = block.get('position', [0, 0])
+            block_size_x, block_size_y = block.get('size', [1, 1])
+            block_pox_x_end, block_pos_y_end = block_pox_x_start + block_size_x, block_pos_y_start + block_size_y
+            text_pox_x_start = min(text_pox_x_start, block_pox_x_start) if text_pox_x_start is not None else block_pox_x_start
+            text_pos_y_start = min(text_pos_y_start, block_pos_y_start) if text_pos_y_start is not None else block_pos_y_start
+            text_pox_x_end = max(text_pox_x_end, block_pox_x_end) if text_pox_x_end is not None else block_pox_x_end
+            text_pos_y_end = max(text_pos_y_end, block_pos_y_end) if text_pos_y_end is not None else block_pos_y_end
         for block in presentation:
             size = block.get('size', [1, 1])
-            elem_size = size
             position = block.get('position', [0, 0])
-            elem_position = position
+            if block.get('type') in ('Text',) and text_pox_x_start is not None:
+                size = text_pox_x_end - position[0], text_pos_y_end - position[1]
             elem_style = (
-                f'''left: {elem_position[0]*100:.0f}%; top: {elem_position[1]*100:.0f}%;'''
-                f''' width: {elem_size[0]*100:.0f}%; height: {elem_size[1]*100:.0f}%;'''
+                f'''left: {position[0]*100:.0f}%; top: {position[1]*100:.0f}%;'''
+                f''' width: {size[0]*100:.0f}%; height: {size[1]*100:.0f}%;'''
             )
             elem_class = 'screen_repr'
             if 'type' in block:
@@ -281,11 +301,7 @@ def app_sound(filepath):
         ]:
             if not (app.root_path / vgmstream_cli).is_file():
                 continue
-            subprocess.run(
-                [app.root_path / vgmstream_cli, '-o', dst_path, src_path],
-                check=True,
-                capture_output=True,
-            )
+            subprocess_run([app.root_path / vgmstream_cli, '-o', dst_path, src_path])
             return flask.send_file(
                 io.BytesIO(dst_path.read_bytes()),
                 download_name=dst_path.name,
@@ -311,9 +327,9 @@ def app_show_file():
     path = pathlib.Path(flask.request.args.get('filepath', type = str))
     match platform.system():
         case 'Windows':
-            subprocess.run(['explorer', '/select,', str(path)], check=True, capture_output=True)
+            subprocess_run(['explorer', '/select,', str(path)])
         case 'Linux':
-            subprocess.run(['xdg-open', str(path.parent)], check=True, capture_output=True)
+            subprocess_run(['xdg-open', str(path.parent)])
         case _:
             flask.abort(501)
     return 'Ok'
@@ -324,12 +340,19 @@ def app_ping():
     return 'Ok'
 
 
-def start_editor(mod_dir: pathlib.Path, screen_dir: pathlib.Path, files_root: pathlib.Path = None, **kwargs):
+def start_editor(mod_dir: pathlib.Path, screen_dir: pathlib.Path | None = None, files_root: pathlib.Path = None, **kwargs):
     app.root_path = files_root
     app.config['mod_dir'] = mod_dir
-    app.config['screen_dir'] = screen_dir
     layout = DowLayout.from_mod_folder(mod_dir)
     app.config['dow_layout'] = layout
     app.config['translator'] = Translator.from_files(*layout.translation_files)
+    if screen_dir is None:
+        for c in layout.iter_paths('art/ui/screens'):
+            if isinstance(c, DirectoryPath):
+                screen_dir = c.full_path
+                break
+        else:
+            raise Exception(f'Cannot find screen folder inside {mod_dir}')
+    app.config['screen_dir'] = screen_dir
     with layout.open():
         app.run(debug=True, **kwargs)

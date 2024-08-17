@@ -49,6 +49,12 @@ class DirectoryPath:
     def __getattr__(self, key):
         return getattr(self.full_path, key)
 
+    def __truediv__(self, other) -> 'DirectoryPath':
+        return DirectoryPath(self.full_path / other, self.root)
+
+    def __rtruediv__(self, other) -> 'DirectoryPath':
+        return DirectoryPath(other / self.full_path, self.root)
+
     def layout_path(self) -> pathlib.PurePosixPath:
         return self.full_path.relative_to(self.root)
 
@@ -106,6 +112,33 @@ class SgaSource(AbstractSource):
         return f'SgaSource({self.path})'
 
 
+def iter_path_candidates(part: str) -> typing.Iterator[str]:
+    yield part
+    yield part.lower()
+    yield part.upper()
+    yield part.title()
+
+
+def try_find_path(root: pathlib.Path, *parts: str) -> pathlib.Path:
+    curr = root
+    for part in parts:
+        for part_case in iter_path_candidates(part):
+            if (candidate := curr / part_case).exists():
+                curr = candidate
+                break
+        else:
+            if curr.is_dir():
+                for c in curr.iterdir():
+                    if c.name.lower() == part.lower():
+                        curr = c
+                        break
+                else:
+                    for p in parts:
+                        root /= p
+                    return root
+    return curr
+
+
 @dataclasses.dataclass
 class DowLayout:
     default_lang: str = 'english'
@@ -125,13 +158,13 @@ class DowLayout:
         for required_mod_name in required_mods[0].get('requiredmods', ['dxp2', 'w40k']) + ['engine']:
             required_mods.append(mod_configs.get(required_mod_name.lower(), cls._make_default_mod_config(required_mod_name)))
         for mod in required_mods:
-            res.sources.append(DirectorySource(dow_folder / mod['modfolder'] / 'Data'))
+            res.sources.append(DirectorySource(try_find_path(dow_folder, mod['modfolder'], 'Data')))
             for folder in mod.get('datafolders', []):
                 folder = res.interpolate_path(folder)
-                res.sources.append(SgaSource(dow_folder / mod['modfolder'] / f'{folder}.sga'))
+                res.sources.append(SgaSource(try_find_path(dow_folder, mod['modfolder'], f'{folder}.sga')))
             for file in mod.get('archivefiles', []):
                 file = res.interpolate_path(file)
-                res.sources.append(SgaSource(dow_folder / mod['modfolder']/f'{file}.sga'))
+                res.sources.append(SgaSource(try_find_path(dow_folder, mod['modfolder'], f'{file}.sga')))
             locale_dir = dow_folder / mod['modfolder'] / res.interpolate_path('%LOCALE%')
             if locale_dir.is_dir():
                 for filepath in locale_dir.iterdir():
@@ -179,7 +212,7 @@ class DowLayout:
         for file in path.iterdir():
             if file.suffix.lower() != '.module' or not file.is_file():
                 continue
-            config = configparser.ConfigParser(interpolation=None)
+            config = configparser.ConfigParser(interpolation=None, comment_prefixes=('#', ';', '--'))
             config.read(file)
             config = config['global']
             result[file.stem.lower()] = {
@@ -216,10 +249,11 @@ class DowLayout:
         return pathlib.PureWindowsPath(path).as_posix()
 
     def iter_paths(self, path: str | pathlib.PurePath) -> typing.Iterator[LayoutPath]:
+        path = pathlib.PurePath(path)
         for source in self.sources:
             if not source.exists():
                 continue
-            source_path = source.make_path(path)
+            source_path = try_find_path(source.make_path('.'), *path.parts)
             if source_path.exists():
                 yield source_path
 

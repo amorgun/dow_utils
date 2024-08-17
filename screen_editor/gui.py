@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import multiprocessing
@@ -18,7 +19,9 @@ DEFAULT_PORT = 5055
 def start_server(*args, files_root=None, **kwargs):
     logging.getLogger().handlers.append(logging.FileHandler(files_root / 'screen_editor.log', 'w'))
     try:
-        start_editor(*args, files_root=files_root, **kwargs)
+        with open(files_root / 'screen_editor_stdout.log', 'w') as log:
+            with contextlib.redirect_stdout(log):
+                start_editor(*args, files_root=files_root, **kwargs)
     except Exception as e:
         logging.exception(f'ERROR')
 
@@ -80,10 +83,12 @@ def start_window(files_root: pathlib.Path):
         if not path.is_dir():
             messagebox.showerror('No such directory', f'Directory {path} does not exist')
             return
-        screen_path = pathlib.Path(screen_dir.get().strip()) if ui_mode.get() == 'advanced' else path / 'Data/art/ui/screens'
-        if not screen_path.is_dir():
-            messagebox.showerror('No such directory', f'Directory {screen_path} does not exist')
-            return
+        screen_path = None
+        if ui_mode.get() == 'advanced':
+            screen_path = pathlib.Path(screen_dir.get().strip())
+            if not screen_path.is_dir():
+                messagebox.showerror('No such directory', f'Directory {screen_path} does not exist')
+                return
         
         app_port = port.get() if ui_mode.get() == 'advanced' else DEFAULT_PORT
 
