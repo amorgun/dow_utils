@@ -84,6 +84,10 @@
       display: none;
     }
 
+    .force_show {
+      display: block;
+    }
+
     .screen_button, .screen_radiobutton, .screen_checkbutton {
       z-index: 1;
     }
@@ -263,6 +267,11 @@
           url: $(this).attr("url")
         })
       });
+
+      $( ".screen_role_itemtemplate" ).addClass('force_show');
+      $( "#btn_toggle_listbox_items" ).click(function() {
+        $( ".screen_role_itemtemplate" ).toggleClass('force_show')
+      });
     });
   </script>
 
@@ -277,6 +286,7 @@
     <h3>{{filepath.name}}</h3>
     <a class="ui-button ui-corner-all ui-button-icon-only" title="Back to File Select" href="{{ url_for('app_list_screens', selected=filepath) }}"><span class="ui-icon ui-icon-arrowreturnthick-1-n"></span></a>
     <button id="btn_show_in_files" class="ui-button ui-corner-all ui-button-icon-only" title="Open Containinf Folder" url="{{ url_for('app_show_file', filepath=filepath) }}"><span class="ui-icon ui-icon ui-icon-folder-open"></span></button>
+    <button id="btn_toggle_listbox_items" class="ui-button ui-corner-all ui-button-icon-only" title="Toggle display of listbox items"><span class="ui-icon ui-icon ui-icon-document-b"></span></button>
   </div>
   <section id="columns">
     <div id="preview" class="column">
