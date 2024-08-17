@@ -26,3 +26,8 @@ python3 -m dow_utils.screen_editor.gui
 ```bash
 python3 -m dow_utils.screen_editor <path_to_mod>
 ```
+
+# Antivirus issues
+This tool uses [PyInstaller](https://github.com/pyinstaller/pyinstaller/tree/develop) to build exe files and some antivirus software flags it as a virus.  
+You can read the detailed explanation [here](https://github.com/pyinstaller/pyinstaller/blob/develop/.github/ISSUE_TEMPLATE/antivirus.md).  
+You can either add the `.exe` to the exceptions or run it from the source code.
