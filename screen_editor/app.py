@@ -117,7 +117,9 @@ def app_screen(filepath):
             html_parts.append('      Files:')
             for file in find_files(src, '.styles'):
                 html_parts.append(f'        {file!r}')
-
+        html_parts.append('\nLoaded styles:')
+        for key in loaded_styles:
+            html_parts.append(f'  {key}')
         html_parts.append('</pre>')
         return flask.render_template('editor.html', filepath=filepath, fonts=font_styles, text_styles=text_styles, sounds=[], preview_html='\n'.join(html_parts))
 
