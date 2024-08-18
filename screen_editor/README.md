@@ -10,7 +10,7 @@ Get `screen_editor.zip` from there.
 You can run pre-build `.exe` or run it from the source code.  
 In case your mod is packed in `.sga` you must extract `.screen` files (usually located in `art/ui/screens`) using [Corsix's Mod Studio](https://modstudio.corsix.org/) before running this tool.
 
-## From the source code
+## Running from the source code
 ### Requirements
 1. 
 ```bash
