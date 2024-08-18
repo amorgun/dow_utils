@@ -16,7 +16,7 @@ pip install -r dow_utils/screen_editor/requirements.txt
 
 # Run
 You can run pre-build `.exe` or run it from the source code.  
-You must extract `.screen` files for your mod (usually located in `art/ui/screens`) using [Corsix's Mod Studio](https://modstudio.corsix.org/) before running this tool.
+In case your mod is packed in `.sga` you must extract `.screen` files (usually located in `art/ui/screens`) using [Corsix's Mod Studio](https://modstudio.corsix.org/) before running this tool.
 
 ## GUI
 ```bash
