@@ -248,13 +248,13 @@ class DowLayout:
         path = path.replace('%MODEL-LEVEL%', model_level or self.default_model_level)
         return pathlib.PureWindowsPath(path).as_posix()
 
-    def iter_paths(self, path: str | pathlib.PurePath) -> typing.Iterator[LayoutPath]:
+    def iter_paths(self, path: str | pathlib.PurePath, return_missing: bool = False) -> typing.Iterator[LayoutPath]:
         path = pathlib.PurePath(path)
         for source in self.sources:
             if not source.exists():
                 continue
             source_path = try_find_path(source.make_path('.'), *path.parts)
-            if source_path.exists():
+            if return_missing or source_path.exists():
                 yield source_path
 
     def find(self, path: str | pathlib.PurePath, default: T = None) -> LayoutPath | T:

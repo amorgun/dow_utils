@@ -103,6 +103,24 @@ def app_screen(filepath):
             }
             text_styles[file.stem] = style
 
+    show_debug = flask.request.args.get('show_debug', default=False, type=bool)
+    if show_debug:
+        html_parts = ['<pre style="max-height: 90%; overflow: auto; height: auto;">']
+        html_parts.append('Sources:')
+        for s in layout.sources:
+            html_parts.append(f'  {"  OK" if s.exists() else "SKIP"} {s}')
+        html_parts.append('\nFound styles:')
+        for src in list(layout.iter_paths('art/ui/styles', return_missing=True))[::-1] + [app.config['screen_dir'] / '../styles']:
+            html_parts.append(f'  {"  OK" if src.exists() else "SKIP"} {src!r}')
+            if not src.exists():
+                continue
+            html_parts.append('      Files:')
+            for file in find_files(src, '.styles'):
+                html_parts.append(f'        {file!r}')
+
+        html_parts.append('</pre>')
+        return flask.render_template('editor.html', filepath=filepath, fonts=font_styles, text_styles=text_styles, sounds=[], preview_html='\n'.join(html_parts))
+
     with filepath.open('r') as f:
         content = f.read()
         screen = lua.decode(f'{{{content}}}')
