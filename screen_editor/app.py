@@ -110,7 +110,7 @@ def app_screen(filepath):
         for s in layout.sources:
             html_parts.append(f'  {"  OK" if s.exists() else "SKIP"} {s}')
         html_parts.append('\nFound styles:')
-        for src in list(layout.iter_paths('art/ui/styles', return_missing=True))[::-1] + [app.config['screen_dir'] / '../styles']:
+        for src in [app.config['screen_dir'] / '../styles'] + list(layout.iter_paths('art/ui/styles', return_missing=True)):
             html_parts.append(f'  {"  OK" if src.exists() else "SKIP"} {src!r}')
             if not src.exists():
                 continue
