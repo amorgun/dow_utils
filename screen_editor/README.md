@@ -6,7 +6,12 @@ It launches a local web server so you can view the files in your browser.
 See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/SE0.3).
 Get `screen_editor.zip` from there.
 
-# Source code
+# Run
+You can run pre-build `.exe` or run it from the source code.  
+In case your mod is packed in `.sga` you must extract `.screen` files (usually located in `art/ui/screens`) using [Corsix's Mod Studio](https://modstudio.corsix.org/) before running this tool.
+
+## From the source code
+### Requirements
 1. 
 ```bash
 git clone git@github.com:amorgun/dow_utils.git
@@ -14,16 +19,12 @@ pip install -r dow_utils/screen_editor/requirements.txt
 ```
 2. Get [vgmstream-cli](https://github.com/vgmstream/vgmstream) and put it into `dow_utils/screen_editor` folder
 
-# Run
-You can run pre-build `.exe` or run it from the source code.  
-In case your mod is packed in `.sga` you must extract `.screen` files (usually located in `art/ui/screens`) using [Corsix's Mod Studio](https://modstudio.corsix.org/) before running this tool.
-
-## GUI
+### GUI
 ```bash
 python3 -m dow_utils.screen_editor.gui
 ```
 
-## CLI
+### CLI
 ```bash
 python3 -m dow_utils.screen_editor <path_to_mod>
 ```
