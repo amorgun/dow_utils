@@ -8,6 +8,7 @@ Get `screen_editor.zip` from there.
 
 # Run
 You can run pre-build `.exe` or run it from the source code.  
+Usually your selected mod folder should be inside your `Dawn of War Soulstorm` installation folder (e.g. `C:/Steam/steamapps/common/Dawn of War Soulstorm/My_Mod`).  
 In case your mod is packed in `.sga` you must extract `.screen` files (usually located in `art/ui/screens`) using [Corsix's Mod Studio](https://modstudio.corsix.org/) before running this tool.
 
 ## Running from the source code
