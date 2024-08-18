@@ -160,6 +160,8 @@ def app_screen(filepath):
         tooltip_text = app.config['translator'][node.get('tooltip_text')]
         sound_attrs = []
         for sound in node_with_style.get('Presentation', {}).get('Sound', []):
+            if 'sample' not in sound:
+                continue
             seen_sounds.add(sound['sample'])
             sound_attrs.append(f'sound_{sound["event"].lower()}="{sound["sample"]}"')
         yield (
