@@ -15,7 +15,8 @@ pip install -r dow_utils/screen_editor/requirements.txt
 2. Get [vgmstream-cli](https://github.com/vgmstream/vgmstream) and put it into `dow_utils/screen_editor` folder
 
 # Run
-You can run pre-build `.exe` or run it from the source code.
+You can run pre-build `.exe` or run it from the source code.  
+You must extract `.screen` files for your mod (usually located in `art/ui/screens`) using [Corsix's Mod Studio](https://modstudio.corsix.org/) before running this tool.
 
 ## GUI
 ```bash
