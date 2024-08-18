@@ -1,4 +1,4 @@
-from .chunky import ChunkReader, ChunkHeader
+from ..chunky import ChunkReader, ChunkHeader
 
 
 def header_to_dict(header: ChunkHeader, parent_dict: dict = None) -> dict:
@@ -15,7 +15,7 @@ def header_to_dict(header: ChunkHeader, parent_dict: dict = None) -> dict:
     return res
 
 
-def load_rsh(reader: ChunkReader | None = None, path: str | None = None):
+def load_rsh(reader: ChunkReader | None = None, path: str | None = None) -> dict:
     if reader is None:
         assert path is not None
         reader = ChunkReader(open(path, 'rb'))
