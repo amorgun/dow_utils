@@ -114,9 +114,9 @@ def app_screen(filepath):
             html_parts.append(f'  {"  OK" if src.exists() else "SKIP"} {src!r}')
             if not src.exists():
                 continue
-            html_parts.append('      Files:')
+            html_parts.append('       Files:')
             for file in find_files(src, '.styles'):
-                html_parts.append(f'        {file!r}')
+                html_parts.append(f'         {file!r}')
         html_parts.append('\nLoaded styles:')
         for key in loaded_styles:
             html_parts.append(f'  {key}')
