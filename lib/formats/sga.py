@@ -141,6 +141,7 @@ class IndexFile:
     data_offset: int
     compressed_size: int
     compression_flag: int
+    data_size: int
     parent: 'IndexFolder | None' = dataclasses.field(default=None, repr=False)
 
     @staticmethod
@@ -150,7 +151,7 @@ class IndexFile:
     @staticmethod
     def is_dir():
         return False
-    
+
 
 IndexItem = IndexFolder | IndexFile
 
@@ -229,6 +230,7 @@ class SgaArchive:
                     data_offset=header.data_offset + f.data_offset,
                     compressed_size=f.compressed_size,
                     compression_flag=f.compression_flag,
+                    data_size=f.decompressed_size,
                 ) for f in files]
             for drive in drives:
                 drive_index = index.setdefault(drive.name, {})
@@ -391,6 +393,10 @@ class SgaPath:
     @property
     def stem(self) -> str:
         return self.impl.stem
+
+    @property
+    def data_size(self):
+        return self._sga_item.data_size
 
     def layout_path(self)-> pathlib.PurePosixPath:
         return self.impl

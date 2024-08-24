@@ -55,9 +55,22 @@ class DirectoryPath:
     def __rtruediv__(self, other) -> 'DirectoryPath':
         return DirectoryPath(other / self.full_path, self.root)
 
+    def iterdir(self) -> 'typing.Generator[DirectoryPath, None, None]':
+        for c in self.full_path.iterdir():
+            yield DirectoryPath(c, self.root)
+
+    @property
+    def data_size(self):
+        return self.full_path.stat().st_size
+
     def layout_path(self) -> pathlib.PurePosixPath:
         return self.full_path.relative_to(self.root)
 
+    def __getstate__(self):
+        return vars(self)
+
+    def __setstate__(self, state):
+        vars(self).update(state)
 
 LayoutPath = SgaPath | DirectoryPath
 
@@ -112,7 +125,7 @@ class SgaSource(AbstractSource):
         return f'SgaSource({self.path})'
 
 
-def iter_path_candidates(part: str) -> typing.Iterator[str]:
+def iter_path_candidates(part: str) -> typing.Generator[str, None, None]:
     yield part
     yield part.lower()
     yield part.upper()
@@ -248,7 +261,7 @@ class DowLayout:
         path = path.replace('%MODEL-LEVEL%', model_level or self.default_model_level)
         return pathlib.PureWindowsPath(path).as_posix()
 
-    def iter_paths(self, path: str | pathlib.PurePath, return_missing: bool = False) -> typing.Iterator[LayoutPath]:
+    def iter_paths(self, path: str | pathlib.PurePath, return_missing: bool = False) -> typing.Generator[LayoutPath, None, None]:
         path = pathlib.PurePath(path)
         for source in self.sources:
             if not source.exists():
@@ -262,7 +275,7 @@ class DowLayout:
             return p
         return default
 
-    def iterdir(self, path: str | pathlib.PurePath) -> typing.Iterator[LayoutPath]:
+    def iterdir(self, path: str | pathlib.PurePath) -> typing.Generator[LayoutPath, None, None]:
         seen_files = set()
         for source in self.sources:
             if not source.exists():
