@@ -55,7 +55,7 @@ class SLPP(object):
         self.depth = 0
         return self.__encode(obj)
 
-    def __encode(self, obj):
+    def __encode(self, obj, leading_spaces=True):
         s = ''
         tab = self.tab
         newline = self.newline
@@ -78,10 +78,10 @@ class SLPP(object):
                ]) == len(obj)):
                 newline = tab = ''
             dp = tab * self.depth
-            s += "%s{%s" % (tab * (self.depth - 2), newline)
+            s += "%s{%s" % (tab * (self.depth - 2) * leading_spaces, newline)
             if isinstance(obj, dict):
                 key_list = ['[%s]' if isinstance(k, Number) else '["%s"]' for k in obj.keys()]
-                contents = [dp + (key + ' = %s') % (k, self.__encode(v)) for (k, v), key in zip(obj.items(), key_list)]
+                contents = [dp + (key + ' = %s') % (k, self.__encode(v, leading_spaces=False)) for (k, v), key in zip(obj.items(), key_list)]
                 s += (',%s' % newline).join(contents)
             else:
                 s += (',%s' % newline).join(
