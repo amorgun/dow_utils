@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %} {{path.name}} {% endblock %}</h1>
+{% endblock %}
+
+{% block head %}
+  <style>
+  </style>
+
+  <script>
+  </script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4 mt-2">
+    <h2>{{path.name}}</h2>
+    <style>
+      {{styles|safe}}
+      .linenos span {
+        float: right;
+        white-space-collapse: collapse;
+      }      
+    </style>
+    <div class="row px-0">
+      {{code|safe}}
+    </div>
+  </div>
+</div>
+{% endblock %}

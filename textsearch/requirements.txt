@@ -1,0 +1,5 @@
+Whoosh==2.7.4
+tqdm==4.66.4
+Pygments==2.18.0
+pillow==10.4.0
+Flask==3.0.3

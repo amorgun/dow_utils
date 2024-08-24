@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %} {{query if query is not none else 'Enter Query'}} {% endblock %}</h1>
+{% endblock %}
+
+{% block head %}
+  <style>
+  </style>
+
+  <script>
+  </script>
+{% endblock %}
+
+{% block content %}
+<style>
+  {{styles|safe}}
+</style>
+<div class="container-fluid">
+  <div class="row mb-3 mt-2">
+    <form>
+      <div class="input-group">
+
+        <div class="input-group-prepend">
+          <span class="input-group-text">Query:</span>
+        </div>
+        <input type="text" class="form-control" name="query" {%if query is not none and query != ''%}value="{{ query }}"{%endif%}>
+
+        <div class="input-group-append">
+          <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  {%if query is not none and query != ''%}
+  <div class="row text-secondary ms-2">Found {{ num_results }} {{ 'files' if num_results != 1 else 'file' }}</div>
+  {%endif%}
+  <div class="row mt-1">
+    <ul class="list-group">
+      {% for res in results %}
+          {%if res['lines'] is none or res['lines'].len == 0%}
+            <div class="card list-group-item pl-1 pr-0 py-0">
+              <div class="card-body px-2 py-1">
+                <h6 class="card-title ps-0 mb-0"><small><a href="{{ url_for('app_doc', filepath=res['path']) }}">{{res['path']}}</a></small></h6>
+              </div>
+            </div>
+          {% else %}
+            {% for line in res['lines'] %}
+            <div class="card list-group-item pl-1 pr-0 py-0">
+              <div class="card-body px-2 py-1">
+                <div class="row">
+                  <h6 class="card-title col-sm-4 mb-0 lh-sm"><small><a href="{{ url_for('app_doc', filepath=res['path'], _anchor='lineno-'~line['lineno']) }}"><span>{{res['path']}}</span>:<span>{{line['lineno']}}</span></a></small></h6>
+                  <div class="card-text col mb-0 lh-sm"><a  class="text-reset text-decoration-none line_preview" href="{{ url_for('app_doc', filepath=res['path'], _anchor='lineno-'~line['lineno']) }}">{{line['html']|safe}}</a></div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="row mt-4">
+    <nav aria-label="Page navigation example">
+      <ul class="pagination flex-wrap justify-content-center">
+        <!-- <li class="page-item"><a class="page-link" href="#">Previous</a></li> -->
+        {% for page in pagination %}
+        <li class="page-item"><a class="page-link {%if page['current']%}active{%endif%}" href="{{ url_for('app_search', query=query, page=page['page'], ndocs=request.args.get('ndocs', default=None)) }}">{{page['page']}}</a></li>
+        {% endfor %}
+        <!-- <li class="page-item"><a class="page-link" href="#">Next</a></li> -->
+      </ul>
+    </nav>
+  </div>
+</div>
+{% endblock %}
