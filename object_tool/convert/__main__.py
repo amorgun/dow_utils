@@ -14,4 +14,5 @@ if __name__ == '__main__':
     parser.add_argument('output', help='Converted file', type=pathlib.Path)
     parser.set_defaults(func=convert_file)
     args = parser.parse_args()
+    args.output.parent.mkdir(exist_ok=True, parents=True)
     args.func(args)

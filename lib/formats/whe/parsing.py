@@ -250,11 +250,11 @@ class Exporter:
                         writer.write_struct('<L', len(m.random_motions))
                         for rm in m.random_motions:
                             writer.write_str(rm.motion.name)
-                            writer.write_struct('<f', e.time)
+                            writer.write_struct('<f', rm.weight)
                         writer.write_struct('<B', m.randomize_each_loop)
                         writer.write_struct('<L', len(m.events))
                         for e in m.events:
-                            writer.write_str(e.name)
+                            writer.write_str(e.event.name)
                             writer.write_struct('<f', e.time)
                         writer.write_struct(
                             '<L 2f 2f f 2f 2f 3B', m.type, *m.start_delay, *m.loop_delay, m.transition_out,
