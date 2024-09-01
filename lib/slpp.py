@@ -61,7 +61,10 @@ class SLPP(object):
         newline = self.newline
 
         if isinstance(obj, str):
-            s += '"%s"' % obj.replace(r'"', r'\"')
+            if '\\' in obj:
+                s += '[[%s]]' % obj
+            else:
+                s += '"%s"' % obj.replace(r'"', r'\"')
         elif isinstance(obj, bytes):
             s += '"{}"'.format(''.join(r'\x{:02x}'.format(c) for c in obj))
         elif isinstance(obj, bool):
@@ -78,14 +81,14 @@ class SLPP(object):
                ]) == len(obj)):
                 newline = tab = ''
             dp = tab * self.depth
-            s += "%s{%s" % (tab * (self.depth - 2) * leading_spaces, newline)
+            s += "%s{%s" % (tab * (self.depth - 1) * leading_spaces, newline)
             if isinstance(obj, dict):
                 key_list = ['[%s]' if isinstance(k, Number) else '["%s"]' for k in obj.keys()]
                 contents = [dp + (key + ' = %s') % (k, self.__encode(v, leading_spaces=False)) for (k, v), key in zip(obj.items(), key_list)]
                 s += (',%s' % newline).join(contents)
             else:
                 s += (',%s' % newline).join(
-                    [dp + self.__encode(el) for el in obj])
+                    [dp + self.__encode(el, leading_spaces=False) for el in obj])
             self.depth -= 1
             s += "%s%s}" % (newline, tab * self.depth)
         return s

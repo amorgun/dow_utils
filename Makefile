@@ -1,6 +1,6 @@
 WINEPREFIX= ${HOME}/wine_prefixes/dow_utils
 
-.PHONY: wine_prefix screen_editor
+.PHONY: wine_prefix screen_editor object_tool
 
 wine_prefix:
 	DISPLAY=:0.0 WINEPREFIX="$(WINEPREFIX)" winecfg; \
@@ -17,3 +17,15 @@ screen_editor:
 	rm -rf dist/screen_editor/dow_utils dist/screen_editor/pyinstaller_script.py; \
 	cp -r screen_editor/templates screen_editor/static LICENSE screen_editor/vgmstream-win64 dist/screen_editor; \
 	cd dist && zip -r screen_editor.zip screen_editor;
+
+
+object_tool:
+	rm -rf dist/object_tool dist/object_tool.zip; \
+	mkdir -p dist/object_tool/dow_utils; \
+	cp -r lib object_tool dist/object_tool/dow_utils; \
+	cp object_tool/pyinstaller_script.py dist/object_tool; \
+	DISPLAY=:0.0 WINEPREFIX="$(WINEPREFIX)" wine cmd /c object_tool/install.bat; \
+	DISPLAY=:0.0 WINEPREFIX="$(WINEPREFIX)" wine cmd /c object_tool/make_exe.bat; \
+	rm -rf dist/object_tool/dow_utils dist/object_tool/pyinstaller_script.py; \
+	cp -r LICENSE dist/object_tool; \
+	cd dist && zip -r object_tool.zip object_tool;

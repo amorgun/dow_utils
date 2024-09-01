@@ -1,22 +1,24 @@
 import contextlib
 import datetime
 import enum
+import io
 import json
 import pathlib
 import typing
 
-from ..lib.chunky import ChunkReader, ChunkHeader, ChunkWriter
+from ...chunky import ChunkReader, ChunkHeader, ChunkWriter
+from ...slpp import slpp, SLPP
 from . import data as d
 
 
 T = typing.TypeVar('T')
 
 
-class WheParser:
+class Parser:
     def parse(self, reader: ChunkReader) -> d.ObjectData:
         result = d.ObjectData()
         reader.skip_relic_chunky()   # Skip 'Relic Chunky' Header
-        header = reader.read_header()  # Read 'File Burn Info' Header
+        header = reader.read_header('DATAFBIF')  # Read 'File Burn Info' Header
         tool_name = reader.read_str()
         unk = reader.read_one('<L')  # zero
         result.burn_info = d.BurnInfo(
@@ -24,7 +26,7 @@ class WheParser:
             username=reader.read_str(),
             date=reader.read_str(),
         )
-        header = reader.read_header()  # Skip 'Folder EBP' Header
+        header = reader.read_header('FOLDREBP')  # Skip 'Folder EBP' Header
         for current_chunk in reader.iter_chunks():  # Read Chunks Until End Of File
             match current_chunk.typeid:
                 case 'FOLDEVCT': result.events = self.parse_list(reader, current_chunk, self.parse_event)
@@ -34,11 +36,19 @@ class WheParser:
                 case 'FOLDMTRE': result.motions = self.parse_list(reader, current_chunk, self.parse_motion)
                 case 'DATAACTS': result.actions = self.parse_actions(reader)
                 case 'DATASEUI': result.selected_ui = self.parse_selected_ui(reader)
+                case 'FOLDANIM': 
+                    anim = self.parse_xrefed_animation(reader, current_chunk)
+                    result.xrefed_animations[anim.name] = anim
                 case _: 
                     raise Exception(f'UNK CHUNK {current_chunk.typeid}')
                     reader.skip(current_chunk.size)  # Skipping Chunks By Default
         result.resolve_links()
         return result
+
+    def parse_bytes(self, data: bytes) -> dict:
+        with io.BytesIO(data) as f:
+            reader = ChunkReader(f)
+            return self.parse(reader)
 
     def parse_list(self,
                    reader: ChunkReader,
@@ -160,12 +170,23 @@ class WheParser:
     def parse_selected_ui(self, reader: ChunkReader) -> d.SelectedUi:
         return d.SelectedUi(
             display_type=d.SelectedUi.DisplayType(reader.read_one('<L')),
-            scale=reader.read_struct('<2f'),
-            offset=reader.read_struct('<2f'),
-            volume_offset=reader.read_struct('<3f'),
-            volume_scale=reader.read_struct('<3f'),
+            scale=d.VecftorXZ(*reader.read_struct('<2f')),
+            offset=d.VecftorXZ(*reader.read_struct('<2f')),
+            volume_offset=d.VecftorXYZ(*reader.read_struct('<3f')),
+            volume_scale=d.VecftorXYZ(*reader.read_struct('<3f')),
             matrix=[reader.read_struct('<3f') for _ in range(3)],
     )
+
+    def parse_xrefed_animation(self, reader: ChunkReader, header: ChunkHeader) -> d.AnimationXref:
+        reader.read_header('DATAXREF')
+        src_path, src_name = reader.read_str(), reader.read_str()
+        dataanbv = reader.read_header('DATAANBV')
+        reader.skip(dataanbv.size)
+        return d.AnimationXref(
+            name=header.name,
+            source_path=src_path,
+            source_name=src_name,
+        )
 
 
 @enum.unique
@@ -183,6 +204,13 @@ class Exporter:
         if self.format is ExportFormat.WHE:
             self.write_meta(writer, data.burn_info.username)
         with writer.start_chunk('FOLDREBP'):
+            for anim in data.xrefed_animations.values():
+                with writer.start_chunk('FOLDANIM', name=anim.name):
+                    with writer.start_chunk('DATAXREF'):
+                        writer.write_str(anim.source_path)
+                        writer.write_str(anim.source_name)
+                    with writer.start_chunk('DATAANBV', name=anim.name):
+                        writer.write_struct('<24x')
             with writer.start_chunk('FOLDEVCT'):
                 for e in data.events.values():
                     with writer.start_chunk('DATAEVNT', name=e.name):
@@ -222,10 +250,11 @@ class Exporter:
                         writer.write_struct('<L', len(m.random_motions))
                         for rm in m.random_motions:
                             writer.write_str(rm.motion.name)
-                            writer.write_struct('<f', rm.weight)
-                        writer.write_struct('<B L', m.randomize_each_loop, len(m.events))
+                            writer.write_struct('<f', e.time)
+                        writer.write_struct('<B', m.randomize_each_loop)
+                        writer.write_struct('<L', len(m.events))
                         for e in m.events:
-                            writer.write_str(e.event.name)
+                            writer.write_str(e.name)
                             writer.write_struct('<f', e.time)
                         writer.write_struct(
                             '<L 2f 2f f 2f 2f 3B', m.type, *m.start_delay, *m.loop_delay, m.transition_out,
@@ -276,10 +305,10 @@ class Exporter:
             writer.write_str(datetime.datetime.utcnow().strftime('%B %d, %I:%M:%S %p'))
 
 
-def read_whe(filename: pathlib.Path) -> d.ObjectData:
-    with filename.open('rb') as f:
+def read_whe(filename: str | pathlib.Path) -> d.ObjectData:
+    with open(filename, 'rb') as f:
         reader = ChunkReader(f)
-        parser = WheParser()
+        parser = Parser()
         return parser.parse(reader)
     
 
@@ -291,6 +320,11 @@ def write_format(data: d.ObjectData, filename: pathlib.Path, format: ExportForma
             },
             'FOLDREBP': {
                 'version': 4,
+                'FOLDANIM': {
+                    'version': 3,
+                    'DATAXREF': {'version': 1},
+                    'DATAANBV': {'version': 1},
+                },
                 'FOLDEVCT': {
                     'version': 1,
                     'DATAEVNT': {'version': 3},
@@ -323,10 +357,7 @@ def write_format(data: d.ObjectData, filename: pathlib.Path, format: ExportForma
         return exporter.export(data, writer)
 
 
-def read_json(filename: pathlib.Path) -> d.ObjectData:
-    with filename.open('r') as f:
-        data = json.load(f)
-
+def from_json(data: dict) -> d.ObjectData:
     def name2enum(name: str, enum_cls: type):
         return getattr(enum_cls, name.upper())
     
@@ -336,7 +367,11 @@ def read_json(filename: pathlib.Path) -> d.ObjectData:
     result = d.ObjectData()
     result.burn_info = d.BurnInfo(**data.get('burn_info', {}))
     result.selected_ui = d.SelectedUi(
-        **keys2enum(data['selected_ui'], ('display_type' , d.SelectedUi.DisplayType)))
+        **keys2enum(data['selected_ui'], ('display_type' , d.SelectedUi.DisplayType)))  # FIXME
+    result.selected_ui.scale = d.VecftorXZ(**result.selected_ui.scale)
+    result.selected_ui.offset = d.VecftorXZ(**result.selected_ui.offset)
+    result.selected_ui.volume_scale = d.VecftorXYZ(**result.selected_ui.volume_scale)
+    result.selected_ui.volume_offset = d.VecftorXYZ(**result.selected_ui.volume_offset)
     for e in data['events']:
         e['properties'] = [d.Event.Property(**i) for i in e['properties']]
     result.events = {e['name']: d.Event(**e) for e in data['events']}
@@ -350,6 +385,7 @@ def read_json(filename: pathlib.Path) -> d.ObjectData:
         m['name']: d.Modifier(**keys2enum(m, ('type', d.Modifier.Type)))
         for m in data['modifiers']
     }
+    result.xrefed_animations = {a['name']: d.AnimationXref(**a) for a in data.get('xrefed_animations', [])}
     for motion in data['motions']:
         motion.setdefault('animations', [])
         motion.setdefault('modifier', None)
@@ -383,7 +419,13 @@ def read_json(filename: pathlib.Path) -> d.ObjectData:
     return result
 
 
-def write_json(data: d.ObjectData, filename: pathlib.Path):
+def read_json(filename: pathlib.Path):
+    with filename.open('r') as f:
+        data = json.load(f)
+    return from_json(data)
+
+
+def to_json(data: d.ObjectData) -> typing.Any:
     import dataclasses
 
     def dataclass_to_dict(data):
@@ -393,7 +435,6 @@ def write_json(data: d.ObjectData, filename: pathlib.Path):
                 res[k] = v.name.lower()
         return res
 
-    filename.parent.mkdir(exist_ok=True, parents=True)
     result = {
         'burn_info': dataclass_to_dict(data.burn_info),
         'selected_ui': dataclass_to_dict(data.selected_ui),
@@ -401,6 +442,7 @@ def write_json(data: d.ObjectData, filename: pathlib.Path):
         'clauses': [dataclass_to_dict(c) for c in data.clauses.values()],
         'conditions': [{**dataclass_to_dict(c), 'clauses': [cl.name for cl in c.clauses]} for c in data.conditions.values()],
         'modifiers': [dataclass_to_dict(m) for m in data.modifiers.values()],
+        'xrefed_animations': [dataclass_to_dict(a) for a in data.xrefed_animations],
         'motions': [{
             **dataclass_to_dict(m),
             'events': [{**dataclass_to_dict(e), 'event': e.event.name} for e in m.events],
@@ -421,19 +463,8 @@ def write_json(data: d.ObjectData, filename: pathlib.Path):
             } for s in a.subactions],
         } for a in data.actions.values()],
     }
-
-    def set_precision(data, precision=2):
-        if isinstance(data, enum.Enum):
-            return data
-        if isinstance(data, float):
-            return round(data, precision)
-        if isinstance(data, dict):
-            return {k: set_precision(v, precision) for k, v in data.items()}
-        if isinstance(data, (list, tuple)):
-            return type(data)(set_precision(i, precision) for i in data)
-        return data
-
-    result = set_precision(result, 2)
+    if not result['xrefed_animations']:
+        result.pop('xrefed_animations')
     for m in result['motions']:
         if m['modifier'] is None:
             m.pop('modifier')
@@ -452,6 +483,26 @@ def write_json(data: d.ObjectData, filename: pathlib.Path):
             a.pop('motions')
         if not a['subactions']:
             a.pop('subactions')
+
+    return result
+
+
+def set_precision(data, precision=2):
+    if isinstance(data, enum.Enum):
+        return data
+    if isinstance(data, float):
+        return round(data, precision)
+    if isinstance(data, dict):
+        return {k: set_precision(v, precision) for k, v in data.items()}
+    if isinstance(data, (list, tuple)):
+        return type(data)(set_precision(i, precision) for i in data)
+    return data
+
+
+def write_json(data: d.ObjectData, filename: pathlib.Path):
+    filename.parent.mkdir(exist_ok=True, parents=True)
+    result = to_json(data)
+    result = set_precision(result, 2)
 
     def json_dump(obj, stream, indent=2, curr_indent=0, curr_path='', no_newline_paths=()):
         write_newlines = curr_path not in no_newline_paths
@@ -515,20 +566,16 @@ def write_json(data: d.ObjectData, filename: pathlib.Path):
         })
 
 
-FILE_READERS = {
-    '.whe': read_whe,
-    '.json': read_json,
-}
-
-FILE_WRITERS = {
-    '.json': write_json,
-    '.whe': lambda data, filename: write_format(data, filename, ExportFormat.WHE),
-    '.ebp': lambda data, filename: write_format(data, filename, ExportFormat.EBP),
-}
+def read_lua(filename: pathlib.Path):
+    with filename.open('r') as f:
+        data = slpp.decode(f.read())
+    return from_json(data)
 
 
-def convert(src: pathlib.Path, dst: pathlib.Path):
-    file_reader = FILE_READERS[src.suffix]
-    parsed = file_reader(src)
-    file_writer = FILE_WRITERS[dst.suffix]
-    file_writer(parsed, dst)
+def write_lua(data: d.ObjectData, filename: pathlib.Path):
+    lua = SLPP()
+    lua.tab = ' ' * 4
+    result = to_json(data)
+    result = set_precision(result, 2)
+    with open(filename, 'w') as f:
+        f.write(lua.encode(result))

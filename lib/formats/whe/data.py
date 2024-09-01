@@ -66,6 +66,13 @@ class Modifier:
 
 
 @dataclasses.dataclass
+class AnimationXref:
+    name: str
+    source_path: str
+    source_name: str
+
+
+@dataclasses.dataclass
 class Motion:
     @enum.unique
     class Type(enum.IntEnum):
@@ -131,6 +138,28 @@ class Action:
 
 
 @dataclasses.dataclass
+class VecftorXZ:
+    x: float
+    z: float
+
+    def __iter__(self):
+        yield self.x
+        yield self.z
+
+
+@dataclasses.dataclass
+class VecftorXYZ:
+    x: float
+    y: float
+    z: float
+
+    def __iter__(self):
+        yield self.x
+        yield self.y
+        yield self.z
+
+
+@dataclasses.dataclass
 class SelectedUi:
     @enum.unique
     class DisplayType(enum.IntEnum):
@@ -138,10 +167,10 @@ class SelectedUi:
         RECTANGLE = 1
 
     display_type: DisplayType
-    scale: tuple[float, float]
-    offset: tuple[float, float]
-    volume_scale: tuple[float, float, float]
-    volume_offset: tuple[float, float, float]
+    scale: VecftorXZ
+    offset: VecftorXZ
+    volume_scale: VecftorXYZ
+    volume_offset: VecftorXYZ
     matrix: list[list[float]]
 
 
@@ -151,6 +180,7 @@ class ObjectData:
     events: dict[str, Event] = dataclasses.field(default_factory=dict)
     clauses: dict[str, Clause] = dataclasses.field(default_factory=dict)
     conditions: dict[str, Condition] = dataclasses.field(default_factory=dict)
+    xrefed_animations: dict[str, AnimationXref] = dataclasses.field(default_factory=dict)
     modifiers: dict[str, Modifier] = dataclasses.field(default_factory=dict)
     motions: dict[str, Motion] = dataclasses.field(default_factory=dict)
     actions: dict[str, Action] = dataclasses.field(default_factory=dict)
