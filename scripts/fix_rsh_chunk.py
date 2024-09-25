@@ -4,20 +4,6 @@ import pathlib
 from ..lib.chunky import ChunkReader, ChunkHeader, ChunkWriter
 
 
-def header_to_dict(header: ChunkHeader, parent_dict: dict = None) -> dict:
-    res = {
-        'typeid': header.typeid,
-        'name': header.name,
-    }
-    if header.typeid.startswith('FOLD'):
-        res['children'] = []
-    else:
-        res['data'] = {}
-    if parent_dict is not None:
-        parent_dict['children'].append(res)
-    return res
-
-
 def force_write(writer: ChunkWriter, data: bytes):
     writer.curr_data_size += len(data)
     return writer.stream.write(data)
