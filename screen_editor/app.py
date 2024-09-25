@@ -367,7 +367,7 @@ def start_editor(mod_dir: pathlib.Path, screen_dir: pathlib.Path | None = None, 
     app.config['mod_dir'] = mod_dir
     layout = DowLayout.from_mod_folder(mod_dir)
     app.config['dow_layout'] = layout
-    app.config['translator'] = Translator.from_files(*layout.translation_files)
+    app.config['translator'] = Translator.from_layout(layout)
     if screen_dir is None:
         for c in layout.iter_paths('art/ui/screens'):
             if isinstance(c, DirectoryPath):

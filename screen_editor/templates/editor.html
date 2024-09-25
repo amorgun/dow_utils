@@ -17,7 +17,7 @@
     .textstyle_{{ name.replace(' ', '_') }} {
         font-family: '{{ style['name'] }}';
         font-size: {{ style['sizeDefault'] | int }}px;
-        {% if 'bold' in name -%}
+        {% if 'bold' in name or style.get('bold', False)-%}
         font-weight: bold;
         {% endif %}
     }
