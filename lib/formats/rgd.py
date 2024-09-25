@@ -7,7 +7,7 @@ from ..chunky import ChunkReader
 
 
 @enum.unique
-class RgdDataType(enum.IntEnum):
+class DataType(enum.IntEnum):
     FLOAT = 0
     INTEGER = 1
     BOOL = 2
@@ -17,7 +17,7 @@ class RgdDataType(enum.IntEnum):
     NO_DATA = 254
 
 
-class RgdParser:
+class Parser:
     def __init__(self, dict_path: str | pathlib.Path = None):
         self.dict_path = dict_path or pathlib.Path(__file__).parent / 'RGD_DIC.TXT'
         self.hash_dict = self.read_hash_dict(self.dict_path)
@@ -26,22 +26,22 @@ class RgdParser:
         reader.skip_relic_chunky()
         current_chunk = reader.read_header('DATAAEGD')
         unk, data_size = reader.read_struct('<2L')
-        return self.read_entry(reader, RgdDataType.TABLE, data_size)
+        return self.read_entry(reader, DataType.TABLE, data_size)
 
     def parse_bytes(self, data: bytes) -> dict:
         with io.BytesIO(data) as f:
             reader = ChunkReader(f)
             return self.parse(reader)
 
-    def read_entry(self, reader: ChunkReader, type_: RgdDataType, data_size: int) -> float | int | bool | dict:
+    def read_entry(self, reader: ChunkReader, type_: DataType, data_size: int) -> float | int | bool | dict:
         match type_:
-            case RgdDataType.TABLE:
+            case DataType.TABLE:
                 num_entries = reader.read_one('<L')
                 entries = []
                 header_size = 4 + num_entries * 12
                 for _ in range(num_entries):
                     hash_, entry_type_, offset = reader.read_struct('<3L')
-                    entry_type_ = RgdDataType(entry_type_)
+                    entry_type_ = DataType(entry_type_)
                     entries.append((self.hash_dict[hash_], entry_type_, offset))
                 entries.sort(key=lambda x: x[2])
                 result = {}
@@ -52,15 +52,15 @@ class RgdParser:
                     entry_end = entries[idx + 1][2] if idx < len(entries) - 1 else data_size - header_size
                     result[name] = self.read_entry(reader, entry_type_, entry_end - offset)
                 return dict(sorted(result.items()))
-            case RgdDataType.STRING:
+            case DataType.STRING:
                 return str(reader.read_one(f'{data_size}s'), 'ascii').rstrip('\0')
-            case RgdDataType.WSTRING:
+            case DataType.WSTRING:
                 return str(reader.read_one(f'{data_size}s'), 'utf16').rstrip('\0')
-            case RgdDataType.FLOAT:
+            case DataType.FLOAT:
                 fmt = '<f'
-            case RgdDataType.INTEGER:
+            case DataType.INTEGER:
                 fmt = '<L'
-            case RgdDataType.BOOL:
+            case DataType.BOOL:
                 fmt = '<B'
             case _:
                 raise Exception(type_)
@@ -88,4 +88,4 @@ def load_rgd(reader: ChunkReader | None = None, path: str | None = None) -> dict
     if reader is None:
         assert path is not None
         reader = ChunkReader(open(path, 'rb'))
-    return RgdParser().parse(reader)
+    return Parser().parse(reader)

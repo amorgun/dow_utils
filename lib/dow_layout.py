@@ -59,6 +59,9 @@ class DirectoryPath:
         for c in self.full_path.iterdir():
             yield DirectoryPath(c, self.root)
 
+    def __str__(self) -> str:
+        return str(self.layout_path())
+
     @property
     def data_size(self):
         return self.full_path.stat().st_size
@@ -74,9 +77,11 @@ class DirectoryPath:
 
 LayoutPath = SgaPath | DirectoryPath
 
+
 class DirectorySource(AbstractSource):
-    def __init__(self, root: str | pathlib.Path):
+    def __init__(self, root: str | pathlib.Path, name: str):
         self.root = pathlib.Path(root)
+        self.name = name
 
     def make_path(self, path: str | pathlib.PurePath) -> DirectoryPath:
         path = pathlib.PurePath(path)
@@ -96,8 +101,9 @@ class DirectorySource(AbstractSource):
 
 
 class SgaSource(AbstractSource):
-    def __init__(self, path: str | pathlib.Path):
+    def __init__(self, path: str | pathlib.Path, name: str):
         self.path = path
+        self.name = name
         self._archive = None
 
     @property
@@ -159,10 +165,9 @@ class DowLayout:
     default_sound_level: SoundLevel = SoundLevel.HIGH
     default_model_level: Modelevel = Modelevel.HIGH
     sources: list[AbstractSource] = dataclasses.field(default_factory=list)
-    translation_files: list[pathlib.Path] = dataclasses.field(default_factory=list)
 
     @classmethod
-    def from_mod_folder(cls, path: str | pathlib.Path) -> 'DowLayout':
+    def from_mod_folder(cls, path: str | pathlib.Path, include_movies: bool = True, include_locale: bool = True) -> 'DowLayout':
         path = pathlib.Path(path)
         dow_folder = path.parent
         res = cls._initilize_defaults(dow_folder)
@@ -171,18 +176,18 @@ class DowLayout:
         for required_mod_name in required_mods[0].get('requiredmods', ['dxp2', 'w40k']) + ['engine']:
             required_mods.append(mod_configs.get(required_mod_name.lower(), cls._make_default_mod_config(required_mod_name)))
         for mod in required_mods:
-            res.sources.append(DirectorySource(try_find_path(dow_folder, mod['modfolder'], 'Data')))
+            res.sources.append(DirectorySource(try_find_path(dow_folder, mod['modfolder'], 'Data'), name=mod['modfolder']))
             for folder in mod.get('datafolders', []):
                 folder = res.interpolate_path(folder)
-                res.sources.append(SgaSource(try_find_path(dow_folder, mod['modfolder'], f'{folder}.sga')))
+                res.sources.append(SgaSource(try_find_path(dow_folder, mod['modfolder'], f'{folder}.sga'), name=mod['modfolder']))
             for file in mod.get('archivefiles', []):
                 file = res.interpolate_path(file)
-                res.sources.append(SgaSource(try_find_path(dow_folder, mod['modfolder'], f'{file}.sga')))
-            locale_dir = dow_folder / mod['modfolder'] / res.interpolate_path('%LOCALE%')
-            if locale_dir.is_dir():
-                for filepath in locale_dir.iterdir():
-                    if filepath.suffix == '.ucs' and filepath.stem.lower() == mod['modfolder'].lower():
-                        res.translation_files.append(filepath)
+                res.sources.append(SgaSource(try_find_path(dow_folder, mod['modfolder'], f'{file}.sga'), name=mod['modfolder']))
+        for mod in required_mods:
+            if include_movies:
+                res.sources.append(DirectorySource(try_find_path(dow_folder, mod['modfolder'], 'Movies'), name=mod['modfolder']))
+            if include_locale:
+                res.sources.append(DirectorySource(try_find_path(dow_folder, mod['modfolder'], res.interpolate_path('%LOCALE%')), name=mod['modfolder']))
         return res
 
     @classmethod
@@ -283,8 +288,8 @@ class DowLayout:
             source_path = source.make_path(path)
             if source_path.exists():
                 for i in source_path.iterdir():
-                    if i.name not in seen_files:
-                        seen_files.add(i.name)
+                    if i.name.lower() not in seen_files:
+                        seen_files.add(i.name.lower())
                         yield i
 
     @contextlib.contextmanager
