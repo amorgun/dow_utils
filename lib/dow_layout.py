@@ -22,7 +22,7 @@ class SoundLevel(str, enum.Enum):
 
 
 @enum.unique
-class Modelevel(str, enum.Enum):
+class ModelLevel(str, enum.Enum):
     HIGH = 'High'
     MEDIUM = 'Medium'
     LOW = 'Low'
@@ -163,7 +163,7 @@ class DowLayout:
     default_lang: str = 'english'
     default_texture_level: TextureLevel = TextureLevel.HIGH
     default_sound_level: SoundLevel = SoundLevel.HIGH
-    default_model_level: Modelevel = Modelevel.HIGH
+    default_model_level: ModelLevel = ModelLevel.HIGH
     sources: list[AbstractSource] = dataclasses.field(default_factory=list)
 
     @classmethod
@@ -213,12 +213,15 @@ class DowLayout:
         conf_path = path / 'regions.ini'
         if not conf_path.is_file():
             return {}
-        config = configparser.ConfigParser()
-        config.read(conf_path)
-        return {
-            **{k.lower(): v for k, v in config['mods'].items()},
-            'default': config['global']['lang'],
-        }
+        try:
+            config = configparser.ConfigParser()
+            config.read(conf_path)
+            return {
+                **{k.lower(): v for k, v in config['mods'].items()},
+                'default': config['global']['lang'],
+            }
+        except Exception:
+            return {}
 
     @classmethod
     def load_game_options(cls, path: pathlib.Path) -> dict:
@@ -258,7 +261,7 @@ class DowLayout:
             lang: str = None,
             texture_level: TextureLevel = None,
             sound_level: SoundLevel = None,
-            model_level: Modelevel = None,
+            model_level: ModelLevel = None,
         ) -> str:
         path = path.replace('%LOCALE%', 'Locale/' + (lang or self.default_lang).title())
         path = path.replace('%TEXTURE-LEVEL%', texture_level or self.default_texture_level)
