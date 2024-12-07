@@ -76,7 +76,7 @@ def start_window(files_root: pathlib.Path):
         except Exception as e:
             messagebox.showerror('Cannot convert', f'Error: {e}')
             raise
-        messagebox.showinfo('Success', f'Converted {path.name}')
+        messagebox.showinfo('Success', f'Converted file is saved to {dst_path}')
 
     start_btn = ttk.Button(mainframe, text='Convert', command=start, state='disabled')
     start_btn.grid(column=1, row=11, pady=4, columnspan=2)

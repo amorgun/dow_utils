@@ -442,7 +442,7 @@ def to_json(data: d.ObjectData) -> typing.Any:
         'clauses': [dataclass_to_dict(c) for c in data.clauses.values()],
         'conditions': [{**dataclass_to_dict(c), 'clauses': [cl.name for cl in c.clauses]} for c in data.conditions.values()],
         'modifiers': [dataclass_to_dict(m) for m in data.modifiers.values()],
-        'xrefed_animations': [dataclass_to_dict(a) for a in data.xrefed_animations],
+        'xrefed_animations': [dataclass_to_dict(a) for a in data.xrefed_animations.values()],
         'motions': [{
             **dataclass_to_dict(m),
             'events': [{**dataclass_to_dict(e), 'event': e.event.name} for e in m.events],
