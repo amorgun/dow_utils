@@ -27,7 +27,7 @@ Supported formats:
     ```
 
 # Download application
-See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/OT0.2).
+See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/OT0.3).
 Get `object_tool.zip` from there.
 
 # Run
