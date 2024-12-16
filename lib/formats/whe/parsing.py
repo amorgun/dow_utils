@@ -23,7 +23,7 @@ class Parser:
         unk = reader.read_one('<L')  # zero
         result.burn_info = d.BurnInfo(
             tool=tool_name,
-            username=reader.read_str(),
+            username=reader.read_str(errors='ignore'),
             date=reader.read_str(),
         )
         header = reader.read_header('FOLDREBP')  # Skip 'Folder EBP' Header
@@ -321,7 +321,7 @@ def write_format(data: d.ObjectData, filename: pathlib.Path, format: ExportForma
             'FOLDREBP': {
                 'version': 4,
                 'FOLDANIM': {
-                    'version': 3,
+                    'version': 3 if format is ExportFormat.WHE else 1,
                     'DATAXREF': {'version': 1},
                     'DATAANBV': {'version': 1},
                 },
