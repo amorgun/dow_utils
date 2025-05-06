@@ -4,8 +4,8 @@ Collection of my Dawn of War-related scripts and tools
 # Content
 ## [Articles](./articles)
 A collection of my articles and tutorials.
-- [Links](./articles/links.md) - a collection of archived tutorials on everything related to DoW
-- [Files](./articles/files.md) - an overview of file extentions used by DoW
+- **[Links Archive](./articles/links.md)** - an archive of tutorials on everything related to DoW
+- **[DoW Files](./articles/files.md)** - an overview of file extentions used by DoW
 ## [Object tool](./object_tool)
 A tool for manipulating Dawn of War object configs.  
 Supports conversion between .whe, .ebp and .json formats.
