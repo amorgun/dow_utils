@@ -18,15 +18,18 @@ class Parser:
     def parse(self, reader: ChunkReader) -> d.ObjectData:
         result = d.ObjectData()
         reader.skip_relic_chunky()   # Skip 'Relic Chunky' Header
-        header = reader.read_header('DATAFBIF')  # Read 'File Burn Info' Header
-        tool_name = reader.read_str()
-        unk = reader.read_one('<L')  # zero
-        result.burn_info = d.BurnInfo(
-            tool=tool_name,
-            username=reader.read_str(errors='ignore'),
-            date=reader.read_str(),
-        )
-        header = reader.read_header('FOLDREBP')  # Skip 'Folder EBP' Header
+        header = reader.read_header()  # Read 'File Burn Info' Header
+        if header.typeid == 'DATAFBIF':
+            tool_name = reader.read_str()
+            unk = reader.read_one('<L')  # zero
+            result.burn_info = d.BurnInfo(
+                tool=tool_name,
+                username=reader.read_str(errors='ignore'),
+                date=reader.read_str(),
+            )
+            header = reader.read_header('FOLDREBP')  # Skip 'Folder EBP' Header
+        else:
+            assert header.typeid == 'FOLDREBP', f'Expected FOLDREBP, got {header.typeid}'
         for current_chunk in reader.iter_chunks():  # Read Chunks Until End Of File
             match current_chunk.typeid:
                 case 'FOLDEVCT': result.events = self.parse_list(reader, current_chunk, self.parse_event)
@@ -202,7 +205,8 @@ class Exporter:
     def export(self, data: d.ObjectData, writer: ChunkWriter):
         self.write_relic_chunky(writer)
         if self.format is ExportFormat.WHE:
-            self.write_meta(writer, data.burn_info.username)
+            if data.burn_info:
+                self.write_meta(writer, data.burn_info.username)
         with writer.start_chunk('FOLDREBP'):
             for anim in data.xrefed_animations.values():
                 with writer.start_chunk('FOLDANIM', name=anim.name):
@@ -436,7 +440,7 @@ def to_json(data: d.ObjectData) -> typing.Any:
         return res
 
     result = {
-        'burn_info': dataclass_to_dict(data.burn_info),
+        'burn_info': dataclass_to_dict(data.burn_info) if data.burn_info is not None else {},
         'selected_ui': dataclass_to_dict(data.selected_ui),
         'events': [dataclass_to_dict(e) for e in data.events.values()],
         'clauses': [dataclass_to_dict(c) for c in data.clauses.values()],
