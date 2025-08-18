@@ -244,7 +244,7 @@ class Exporter:
                 for m in data.modifiers.values():
                     with writer.start_chunk('DATAMODF', name=m.name):
                         writer.write_str(m.variable)
-                        writer.write_struct('<Lff', m.type, m.ref_value / 100., m.default / 100.)
+                        writer.write_struct('<Lff', m.type, m.ref_value, m.default)
             with writer.start_chunk('FOLDMTRE'):
                 for m in data.motions.values():
                     with writer.start_chunk('DATAMTON', name=m.name):
