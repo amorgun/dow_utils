@@ -66,7 +66,7 @@ def start_window(files_root: pathlib.Path):
 
         nonlocal initialdir
         initialdir = str(path.parent)
-        with data_path.open('w') as f:
+        with data_path.open('w', encoding='utf8') as f:
             json.dump({
                 'initialdir': initialdir,
                 'format': convert_to.get(),
@@ -95,7 +95,8 @@ def start_window(files_root: pathlib.Path):
             dlg.destroy()
 
         dlg = tk.Toplevel(root)
-        ttk.Label(dlg, text='The source code is available on Github:').grid(pady=(10, 0))
+        ttk.Label(dlg, text='Object Tool v0.4').grid(pady=(10, 0))
+        ttk.Label(dlg, text='The source code is available on Github:').grid()
         link = ttk.Label(dlg, text='https://github.com/amorgun/dow_utils/tree/main/object_tool', foreground='blue', cursor='hand2')
         link.grid(padx=6)
         link.bind("<ButtonRelease-1>", lambda e: webbrowser.open('https://github.com/amorgun/dow_utils/tree/main/object_tool'))
@@ -121,11 +122,11 @@ def start_window(files_root: pathlib.Path):
 
     if data_path.is_file():
         try:
-            with data_path.open('r') as f:
+            with data_path.open('r', encoding='utf8') as f:
                 data = json.load(f)
             initialdir = data.get('initialdir')
             convert_to.set(data.get('format', convert_to.get()))
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
             pass
 
     root.mainloop()
