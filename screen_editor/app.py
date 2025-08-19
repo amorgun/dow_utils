@@ -8,7 +8,9 @@ import tempfile
 import flask
 from PIL import Image, ImageOps
 from ..lib.slpp import slpp as lua
+from ..lib.chunky import ChunkReader
 from ..lib.dow_layout import DowLayout, LayoutPath, DirectoryPath
+from ..lib.formats.rtx import load_rtx
 from ..lib.translation import Translator
 
 
@@ -287,12 +289,21 @@ def app_image(filepath):
     filepaths = [filepath]
     if filepath.lower().endswith('.tga'):
         filepaths.append(filepath[:-4] + '.dds')
+        filepaths.append(filepath[:-4] + '.rtx')
     for filepath in reversed(filepaths):
         full_path = layout.find(filepath)
         if full_path is None or not full_path.is_file():
             continue
-        img = Image.open(io.BytesIO(full_path.read_bytes()))
-        if full_path.suffix == '.dds':
+        if full_path.suffix == '.rtx':
+            reader = ChunkReader(io.BytesIO(full_path.read_bytes()))
+            data = load_rtx(reader)
+            img_format = data['format_str']
+            img_data = data['image_bytes']
+        else:
+            img_format = full_path.suffix[1:]
+            img_data = full_path.read_bytes()
+        img = Image.open(io.BytesIO(img_data))
+        if img_format == 'dds':
             img = ImageOps.flip(img)
         buff = io.BytesIO()
         img.save(buff, 'png')

@@ -186,7 +186,8 @@ def start_window(files_root: pathlib.Path):
             dlg.destroy()
 
         dlg = tk.Toplevel(root)
-        ttk.Label(dlg, text='The source code is available on Github:').grid(pady=(10, 0))
+        ttk.Label(dlg, text='Screen editor v0.5').grid(pady=(10, 0))
+        ttk.Label(dlg, text='The source code is available on Github:').grid()
         link = ttk.Label(dlg, text='https://github.com/amorgun/dow_utils/tree/main/screen_editor', foreground='blue', cursor='hand2')
         link.grid(padx=6)
         link.bind("<ButtonRelease-1>", lambda e: webbrowser.open('https://github.com/amorgun/dow_utils/tree/main/screen_editor'))

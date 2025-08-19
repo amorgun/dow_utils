@@ -1,4 +1,5 @@
 from ..chunky import ChunkReader, ChunkHeader
+from .rtx import CH_FOLDTXTR
 
 
 def header_to_dict(header: ChunkHeader, parent_dict: dict = None) -> dict:
@@ -33,22 +34,6 @@ def load_rsh(reader: ChunkReader | None = None, path: str | None = None) -> dict
                 **header_to_dict(current_chunk),
                 **data,
             })
-    return result
-
-
-def CH_FOLDTXTR(reader: ChunkReader, parent_chunk: ChunkHeader) -> dict:
-    result = header_to_dict(parent_chunk)
-    current_chunk = reader.read_header('DATAHEAD')
-    curr_data = header_to_dict(current_chunk, result)['data']
-    curr_data['image_type'], curr_data['num_images'] = reader.read_struct('<2l')
-    current_chunk = reader.read_header('FOLDIMAG')
-    foldimag_data = header_to_dict(current_chunk, result)
-    current_chunk = reader.read_header('DATAATTR')
-    curr_data = header_to_dict(current_chunk, foldimag_data)['data']
-    curr_data['image_format'], curr_data['width'], curr_data['height'], curr_data['num_mips'] = reader.read_struct('<4l')
-    current_chunk = reader.read_header('DATADATA')
-    curr_data = header_to_dict(current_chunk, foldimag_data)['data']
-    reader.skip(current_chunk.size)  # dds data
     return result
 
 

@@ -61,7 +61,6 @@
 
     #preview {
       /* background: pink; */
-      flex: 4 800px;
       position: relative;
     }
 
@@ -194,6 +193,18 @@
     .ui-button {
       z-index: 1;
     }
+
+    .ae-preview {
+      flex: 4 800px;
+    }
+
+    .de-preview {
+      aspect-ratio: 4 / 3;
+      height: 100%;
+      flex: none;
+      justify-content: center;
+      margin: 0 auto;
+    }
   </style>
 
   <script>
@@ -269,8 +280,13 @@
       });
 
       $( ".screen_role_itemtemplate" ).addClass('force_show');
+
       $( "#btn_toggle_listbox_items" ).click(function() {
         $( ".screen_role_itemtemplate" ).toggleClass('force_show')
+      });
+
+      $( "#btn_toggle_de" ).click(function() {
+        $( "#preview" ).toggleClass('de-preview').toggleClass('ae-preview')
       });
     });
   </script>
@@ -287,9 +303,10 @@
     <a class="ui-button ui-corner-all ui-button-icon-only" title="Back to File Select" href="{{ url_for('app_list_screens', selected=filepath) }}"><span class="ui-icon ui-icon-arrowreturnthick-1-n"></span></a>
     <button id="btn_show_in_files" class="ui-button ui-corner-all ui-button-icon-only" title="Open Containinf Folder" url="{{ url_for('app_show_file', filepath=filepath) }}"><span class="ui-icon ui-icon ui-icon-folder-open"></span></button>
     <button id="btn_toggle_listbox_items" class="ui-button ui-corner-all ui-button-icon-only" title="Toggle display of listbox items"><span class="ui-icon ui-icon ui-icon-document-b"></span></button>
+    <button id="btn_toggle_de" class="ui-button ui-corner-all ui-button-icon-only" title="Toggle DE mode"><span class="ui-icon ui-icon 	ui-icon-star"></span></button>
   </div>
   <section id="columns">
-    <div id="preview" class="column">
+    <div id="preview" class="column ae-preview">
       {{preview_html|safe}}
     </div>
     <!-- <div id="attributes" class="column">
