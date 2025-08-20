@@ -1,9 +1,11 @@
 # From https://github.com/SirAnthony/slpp
 
+import collections
 import re
 import sys
 from numbers import Number
 
+class Preformat(collections.UserString): ...
 
 ERRORS = {
     'unexp_end_string': u'Unexpected end of string while parsing Lua string.',
@@ -40,6 +42,9 @@ class SLPP(object):
         self.alnum = re.compile('\w', re.M)
         self.newline = '\n'
         self.tab = '\t'
+        self.table_newlines = False
+        self.shorten_tables = True
+        self.trailing_comma = True
 
     def decode(self, text):
         if not text or not isinstance(text, str):
@@ -55,12 +60,21 @@ class SLPP(object):
         self.depth = 0
         return self.__encode(obj)
 
+    def __encode_dict_key(self, k) -> str:
+        if isinstance(k, Number):
+            return '["%s"]'
+        if isinstance(k, str) and k.isidentifier():
+            return '%s'
+        return '["%s"]'
+
     def __encode(self, obj, leading_spaces=True):
         s = ''
         tab = self.tab
         newline = self.newline
 
-        if isinstance(obj, str):
+        if isinstance(obj, Preformat):
+            s += obj.data
+        elif isinstance(obj, str):
             if '\\' in obj:
                 s += '[[%s]]' % obj
             else:
@@ -75,20 +89,28 @@ class SLPP(object):
             s += str(obj)
         elif isinstance(obj, (list, tuple, dict)):
             self.depth += 1
-            if len(obj) == 0 or (not isinstance(obj, dict) and len([
+            if self.shorten_tables and (
+                len(obj) == 0 or (not isinstance(obj, dict) and len([
                     x for x in obj
                     if isinstance(x, Number) or (isinstance(x, str) and len(x) < 10)
-               ]) == len(obj)):
+               ]) == len(obj))):
                 newline = tab = ''
             dp = tab * self.depth
-            s += "%s{%s" % (tab * (self.depth - 1) * leading_spaces, newline)
+            if self.table_newlines:
+                s += "%s%s{%s" % (newline, tab * (self.depth - 1), newline if obj else '')
+            else:
+                s += "%s{%s" % (tab * (self.depth - 1) * leading_spaces, newline)
             if isinstance(obj, dict):
-                key_list = ['[%s]' if isinstance(k, Number) else '["%s"]' for k in obj.keys()]
+                key_list = [self.__encode_dict_key(k) for k in obj.keys()]
                 contents = [dp + (key + ' = %s') % (k, self.__encode(v, leading_spaces=False)) for (k, v), key in zip(obj.items(), key_list)]
                 s += (',%s' % newline).join(contents)
+                if self.trailing_comma and contents:
+                    s += ','
             else:
-                s += (',%s' % newline).join(
-                    [dp + self.__encode(el, leading_spaces=False) for el in obj])
+                contents = [dp + self.__encode(el, leading_spaces=False) for el in obj]
+                s += (',%s' % newline).join(contents)
+                if self.trailing_comma and contents:
+                    s += ','
             self.depth -= 1
             s += "%s%s}" % (newline, tab * self.depth)
         return s
