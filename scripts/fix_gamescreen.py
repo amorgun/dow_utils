@@ -1,7 +1,8 @@
 import argparse
 import pathlib
+import textwrap
 
-from ..lib.slpp import slpp as lua
+from ..lib.slpp import SLPP, Preformat
 
 
 
@@ -11,7 +12,10 @@ if __name__ == '__main__':
     parser.add_argument('dst', help='Result path', type=pathlib.Path)
     args = parser.parse_args()
 
-    parsed = lua.decode('{' + args.src.read_text() + "}")
+    my_lua = SLPP()
+    my_lua.table_newlines = True
+    my_lua.shorten_tables = False
+    parsed = my_lua.decode('{' + args.src.read_text() + "}")
     
     # def fix_position(pos, scale):
     #     x, y = pos[0] / scale[0], pos[1] / scale[1]
@@ -37,6 +41,9 @@ if __name__ == '__main__':
                 x += pad_size
         return x, y
     
+    # print(fix_position([0, 0], 0, 'left'))
+    # print(fix_position([1, 1], 0, 'right'))
+
     def fn(root, scale: tuple[float, float] = (1, 1)):
         size = root.get('size', [1, 1])
         if scale[0] == 0 or scale[1] == 0:
@@ -48,6 +55,13 @@ if __name__ == '__main__':
             'grpHero',
             'btnNextBuilder',
             'btnNextMilitary',
+            'ctmMinimap',
+            'grpReq',
+            'grpPower',
+            'grpSouls',
+            'grpFaith',
+            'txtBonus',
+            'iconBonus',
         }:
             direction = 'left'
         elif name in {
@@ -84,7 +98,48 @@ if __name__ == '__main__':
         else:
             for c in root.get('Children', []):
                 fn(c, size)
+        
+    def fix_format(root):
+        def fix_val(v):
+            if v == 0 or v == 1:
+                return Preformat(f'{v:.0f}')
+            return Preformat(f'{v:#.5f}')
+        
+        if isinstance(root, dict):
+            # if root.get('name') == 'txtReq':
+            #     print(root)
+            if (
+                'name' in root
+                and 'ArtGuides' not in root
+                and root.get('type') not in {'Text', 'Graphic', }
+            ):
+                root['Clip'] = False
+            for k in list(root):
+                v = root[k]
+                if isinstance(v, (list, tuple)):
+                    root[k] = [fix_format(i) for i in v]
+                elif isinstance(v,dict):
+                    root[k] = {a: fix_format(b) for a, b in v.items()}
+                else:
+                    root[k] = fix_format(v)
+        elif isinstance(root, list):
+            for idx, v in enumerate(root):
+                root[idx] = fix_format(v)
+        elif isinstance(root, float):
+            root = fix_val(root)
+        return root
+
     fn(parsed['Screen']['Widgets'])
     fn(parsed['Screen']['TooltipWidgets'])
-    result = lua.encode(parsed)
-    args.dst.write_text(result[1:-1])
+    fix_format(parsed)
+    parsed['Screen']['AspectRatio'] = Preformat('1.33333')
+
+    newline = '\r\n'
+    def to_str(data):
+        result = my_lua.encode(data)
+        lines = result.split('\n')[2:-1]
+        lines = [l + ' ' if l.endswith('= ') or l.endswith('\t') else l for l in lines]
+        return textwrap.dedent(newline.join(lines))
+    args.dst.write_text(
+        to_str({'Screen': parsed['Screen']})[:-1] + newline + to_str({'ToolInfo': parsed['ToolInfo']})[:-1] + newline
+    )
