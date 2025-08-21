@@ -207,5 +207,6 @@
 # [Blender DoW addon](https://github.com/amorgun/blender_dow)
 - [First steps](https://github.com/amorgun/blender_dow/blob/main/docs/first_steps.md) - how to install the addon and import a model from DoW to Blender
 - [Exporting a model](https://github.com/amorgun/blender_dow/blob/main/docs/export.md) - step-by-step guide on how to export a complex animated model from Blender to DoW
+- [FAQ](https://github.com/amorgun/blender_dow/blob/main/docs/faq.md) - answert to some common question about the addon.
 - [Tabletop Simulator Import](https://github.com/amorgun/blender_dow/blob/main/docs/tts_import.md) - simplified guide on how to open an .obj model and export it to DoW
 - [From Gladius to DoW](https://github.com/amorgun/blender_dow/blob/main/docs/gladius.md) - how to import animated and teamcolorable models from Gladius – Relics of War to DoW. 
