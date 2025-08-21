@@ -343,7 +343,7 @@ def write_format(data: d.ObjectData, filename: pathlib.Path, format: ExportForma
                 },
                 'FOLDMODL': {
                     'version': 1,
-                    'DATAMODF': {'version': 1},
+                    'DATAMODF': {'version': 1 if format is ExportFormat.WHE else 2},
                 },
                 'FOLDMTRE': {
                     'version': 3,
