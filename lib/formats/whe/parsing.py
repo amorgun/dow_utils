@@ -80,7 +80,7 @@ class Parser:
             case d.Clause.Type.FLOAT: 
                 value, default = reader.read_struct('<2f')
                 value, default = value * 100, default * 100
-            case d.Clause.Type.BOOLEAN: value, default = map(bool, reader.read_struct('2B'))
+            case d.Clause.Type.BOOLEAN: value, default = map(bool, reader.read_struct('<2B'))
             case d.Clause.Type.STRING: value, default = reader.read_str(), reader.read_str()
         return d.Clause(name=header.name, type=type, variable=variable, comparison=comparison, value=value, default=default)
     
@@ -325,8 +325,8 @@ def write_format(data: d.ObjectData, filename: pathlib.Path, format: ExportForma
             'FOLDREBP': {
                 'version': 4,
                 'FOLDANIM': {
-                    'version': 3 if format is ExportFormat.WHE else 1,
-                    'DATAXREF': {'version': 1},
+                    'version': 3 if format is ExportFormat.WHE else 2,
+                    'DATAXREF': {'version': 1 if format is ExportFormat.WHE else 3},
                     'DATAANBV': {'version': 1},
                 },
                 'FOLDEVCT': {
