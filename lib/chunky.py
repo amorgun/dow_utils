@@ -35,6 +35,7 @@ class ChunkReader:
         return ChunkHeader(typeid, version, size, name_length, name)
 
     def read_struct(self, fmt: str) -> tuple | None:
+        assert fmt[0] == '<', fmt
         size = struct.calcsize(fmt)
         buf = self.stream.read(size)
         if len(buf) < size:
@@ -115,6 +116,7 @@ class ChunkWriter:
         return self.stream.write(data)
 
     def write_struct(self, fmt: str, *args):
+        assert fmt[0] == '<', fmt
         self.write(struct.pack(fmt, *args))
     
     def write_str(self, s: str, encoding: str = 'utf8'):
