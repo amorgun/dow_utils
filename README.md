@@ -13,7 +13,7 @@ Supports conversion between .whe, .ebp and .json formats.
 A tool for an interactive preview of .screen files.  
 Allows you can view the game menus in your browser and interact with them.
 ## [RTX converter](./rtx_converter)
-A tool for packing and unpacking RTX images.  
+A tool for packing and unpacking RTX image container files.  
 DoW DE has its own flavor of RTX, so tools for the vanilla version don't work well.
 ## 🚧WIP🚧  [Textsearch](./textsearch)
 A tool for full-text search in the game files.  
