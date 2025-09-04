@@ -1,9 +1,9 @@
-# Dawn of War Screen Editor
+# Dawn of War RTX Converter
 A tool for packing and unpacking RTX images.
 
 # Download application
 See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/RC0.1).
-Get `screen_editor.zip` from there.
+Get `rtx_converter.zip` from there.
 
 # Antivirus issues
 This tool uses [PyInstaller](https://github.com/pyinstaller/pyinstaller/tree/develop) to build exe files and some antivirus software flags it as a virus.  
