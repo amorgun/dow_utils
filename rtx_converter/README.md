@@ -3,7 +3,7 @@ A tool for packing and unpacking RTX image container files.
 DoW DE has its own flavor of RTX, so tools for the vanilla version don't work well.
 
 # Download application
-See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/RC0.1).
+See the [latest release](https://github.com/amorgun/dow_utils/releases/tag/RC0.2).
 Get `rtx_converter.zip` from there.
 
 # Antivirus issues
