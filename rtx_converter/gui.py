@@ -12,6 +12,7 @@ from PIL import Image
 import quicktex.dds
 import quicktex.s3tc.bc1
 import quicktex.s3tc.bc3
+import sv_ttk
 
 from ..lib.chunky import ChunkReader, ChunkWriter
 
@@ -22,8 +23,6 @@ def converter_window(files_root: pathlib.Path):
     root.title('Dawn of War DE RTX Converter')
     mainframe = ttk.Frame(root)
     mainframe.grid(column=0, row=0)
-    root.columnconfigure(0, weight=1)
-    root.rowconfigure(0, weight=1)
 
     pbar = ttk.Progressbar(mainframe, orient='horizontal', mode='determinate', length=200)
     pbar.grid(column=0, row=8, columnspan=2)
@@ -32,14 +31,14 @@ def converter_window(files_root: pathlib.Path):
     dds_format = ttk.Combobox(mainframe, state='readonly', values=['Auto', 'DXT1', 'DXT5'], width=8)
     dds_format.set('Auto')
     dds_format.grid(column=1, row=1, padx=(10, 15), pady=(5, 15))
-    pack_button = ttk.Button(mainframe, text='Convert to RTX', command=lambda: pack_files(dds_format.get(), pbar))
+    pack_button = ttk.Button(mainframe, text='Convert to RTX', style='Accent.TButton', command=lambda: pack_files(dds_format.get(), pbar))
     pack_button.grid(column=0, row=0, columnspan=2)
-    
+    ttk.Separator(mainframe).grid(column=0, row=2, columnspan=2)
     ttk.Label(mainframe, text='Unpack Format:').grid(column=0, row=6, padx=(15, 0), sticky=tk.E, pady=(5, 15))
     unpack_format = ttk.Combobox(mainframe, state='readonly', values=['Original', 'PNG'], width=8)
     unpack_format.set('Original')
     unpack_format.grid(column=1, row=6, padx=(10, 15), pady=(5, 15))
-    ttk.Button(mainframe, text='Unpack RTX', command=lambda: unpack_files(unpack_format.get(), pbar)).grid(
+    ttk.Button(mainframe, text='Unpack RTX', style='Accent.TButton', command=lambda: unpack_files(unpack_format.get(), pbar)).grid(
         column=0, row=5, ipadx=10, columnspan=2)
     
     def show_about():
@@ -48,7 +47,7 @@ def converter_window(files_root: pathlib.Path):
             dlg.destroy()
 
         dlg = tk.Toplevel(root)
-        ttk.Label(dlg, text='RTX Converter v0.1').grid(pady=(10, 0))
+        ttk.Label(dlg, text='RTX Converter v0.2').grid(pady=(10, 0))
         ttk.Label(dlg, text='The source code is available on Github:').grid()
         link = ttk.Label(dlg, text='https://github.com/amorgun/dow_utils', foreground='blue', cursor='hand2')
         link.grid(padx=6)
@@ -72,6 +71,7 @@ def converter_window(files_root: pathlib.Path):
     root.minsize(200, 80)
     root.resizable(False, False)
 
+    sv_ttk.set_theme("light")
     root.mainloop()
 
 
